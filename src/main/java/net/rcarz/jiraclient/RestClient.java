@@ -197,7 +197,7 @@ public class RestClient {
         throws RestException, IOException {
         if (file != null) {
             File fileUpload = file;
-            req.setHeader("X-Atlassian-Token", "nocheck");
+            req.setHeader("X-Atlassian-Token", "no-check");
             MultipartEntity ent = new MultipartEntity();
             ent.addPart("file", new FileBody(fileUpload));
             req.setEntity(ent);
@@ -208,7 +208,7 @@ public class RestClient {
     private JSON request(HttpEntityEnclosingRequestBase req, Issue.NewAttachment... attachments)
         throws RestException, IOException {
         if (attachments != null) {
-            req.setHeader("X-Atlassian-Token", "nocheck");
+            req.setHeader("X-Atlassian-Token", "no-check");
             MultipartEntity ent = new MultipartEntity();
             for(Issue.NewAttachment attachment : attachments) {
                 String filename = attachment.getFilename();
