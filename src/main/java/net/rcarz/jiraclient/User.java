@@ -23,8 +23,11 @@ import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,6 +56,27 @@ public class User extends Resource {
 
         if (json != null)
             deserialise(json);
+    }
+
+
+    public static User create(RestClient restclient, String username, String email, String displayName) throws JiraException {
+        JSON payload = new JSONObject()
+                .accumulate("name", username)
+                .accumulate("key", username)
+                .accumulate("emailAddress", email)
+                .accumulate("displayName", displayName);
+
+        JSON result = null;
+        try {
+            result = restclient.post(getBaseUri() + "user", payload);
+        } catch (Exception ex) {
+            throw new JiraException("Failed to retrieve user " + username, ex);
+        }
+
+        if (!(result instanceof JSONObject))
+            throw new JiraException("JSON payload is malformed");
+
+        return new User(restclient, (JSONObject) result);
     }
 
     /**
@@ -97,6 +121,7 @@ public class User extends Resource {
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("username", name);
+        params.put("includeInactive", Boolean.TRUE.toString());
 
         try {
             result = restClient.get(getBaseUri() + "user/search", params);
@@ -168,6 +193,20 @@ public class User extends Resource {
         return name;
     }
 
+    public void setActive() throws JiraException {
+        if (!isActive()) {
+            toggleState(Boolean.TRUE);
+            active = true;
+        }
+    }
+
+    public void setInactive() throws JiraException {
+        if (isActive()) {
+            toggleState(Boolean.FALSE);
+            active = false;
+        }
+    }
+
     /**
      * Get the groups this user is member of
      * @return The groups
@@ -178,6 +217,23 @@ public class User extends Resource {
             User.get(restclient, name);
         }
         return groups;
+    }
+
+    private void toggleState(Boolean active) throws JiraException {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("username", getName());
+        params.put("key", getName());
+
+        JSONObject json = new JSONObject()
+                .accumulate("username", getName())
+                .accumulate("key", getName())
+                .accumulate("active", active.toString());
+        try {
+            URI updateUser = restclient.buildURI(getBaseUri() + "user", Collections.singletonMap("username", getName()));
+            restclient.put(updateUser, json);
+        } catch (Exception ex) {
+            throw new JiraException("Failed to activate user: " + getName(), ex);
+        }
     }
 }
 

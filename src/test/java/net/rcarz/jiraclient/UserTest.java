@@ -12,8 +12,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -51,6 +50,18 @@ public class UserTest {
         items.element(new JSONObject().accumulate("name", "a-team").accumulate("self", groupSelfTemplate + "a-team"));
 
         json.put("groups", new JSONObject().accumulate("size", 2).accumulate("items", items));
+
+        return json;
+    }
+
+    protected static JSONObject getUserUpdateJSON(boolean state) {
+        JSONObject json = new JSONObject();
+
+        json.put("self", self);
+        json.put("key", username);
+        json.put("name", username);
+        json.put("emailAddress", email);
+        json.put("displayName", displayName);
 
         return json;
     }
@@ -132,6 +143,17 @@ public class UserTest {
         Collection<User> members = jiraClient.getAllUsers(false);
         assertEquals(GroupTest.GROUP_SIZE, members.size());
         assertEquals(username, members.iterator().next().getName());
+    }
+
+    @Test
+    public void testSetUserInactive() throws Exception {
+        final RestClient restClient = PowerMockito.mock(RestClient.class);
+        when(restClient.get(anyString(), anyMap())).thenReturn(getUserJSON());
+        when(restClient.put(anyString(), any())).thenReturn(getUserUpdateJSON(false));
+
+        User user = User.get(restClient, "username");
+        user.setInactive();
+        assertFalse("User should be inactive", user.isActive());
     }
 
     private JiraClient getJiraClientMock(JSON firstResponse, JSON secondResponse) throws RestException, IOException {
