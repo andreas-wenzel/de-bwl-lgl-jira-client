@@ -15,10 +15,12 @@ import java.util.Map;
 import net.sf.json.JSON;
 import net.sf.json.JSONNull;
 
+import net.sf.json.JSONObject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.powermock.api.mockito.PowerMockito;
 
 import static org.mockito.Mockito.*;
@@ -193,6 +195,24 @@ public class IssueTest {
                 restClient.postPayload.toString(0));
     }
 
+    @Test
+    public void testTransition() throws Exception {
+        final ArgumentCaptor<String> postPath = ArgumentCaptor.forClass(String.class);
+        final ArgumentCaptor<JSONObject> payload = ArgumentCaptor.forClass(JSONObject.class);
+        final RestClient restClient = PowerMockito.mock(RestClient.class);
+
+        when(restClient.get(any(URI.class))).thenReturn(Utils.getTransitions());
+        when(restClient.post(postPath.capture(), payload.capture())).thenReturn(null);
+
+        Issue issue = new Issue(restClient, Utils.getTestIssue());
+        issue.transition().resolution("Duplicate").comment("There can be only one!").execute("Close Issue");
+
+        assertEquals("/rest/api/latest/issue/FILTA-43/transitions", postPath.getValue());
+        assertEquals("{\"update\":" +
+                "{\"comment\":[{\"add\":{\"body\":\"There can be only one!\"}}]}," +
+                "\"fields\":{\"resolution\":{\"name\":\"Duplicate\"}}," +
+                "\"transition\":{\"id\":\"2\"}}", payload.getValue().toString(0));
+    }
 
     private static class TestableRestClient extends RestClient {
 

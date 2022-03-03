@@ -1,17 +1,17 @@
 /**
  * jira-client - a simple JIRA REST client
  * Copyright (c) 2013 Bob Carroll (bob.carroll@alum.rit.edu)
- *
+ * <p>
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
-
+ * <p>
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -19,20 +19,19 @@
 
 package net.rcarz.jiraclient;
 
-import java.io.File;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 import net.rcarz.utils.WorklogUtils;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+
+import java.io.File;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
 
 /**
  * Represents a JIRA issue.
@@ -66,15 +65,14 @@ public class Issue extends Resource {
          * Executes the create action and specify which fields to retrieve.
          *
          * @param includedFields Specifies which issue fields will be included
-         * in the result.
-         * <br>Some examples how this parameter works:
-         * <ul>
-         * <li>*all - include all fields</li>
-         * <li>*navigable - include just navigable fields</li>
-         * <li>summary,comment - include just the summary and comments</li>
-         * <li>*all,-comment - include all fields</li>
-         * </ul>
-         *
+         *                       in the result.
+         *                       <br>Some examples how this parameter works:
+         *                       <ul>
+         *                       <li>*all - include all fields</li>
+         *                       <li>*navigable - include just navigable fields</li>
+         *                       <li>summary,comment - include just the summary and comments</li>
+         *                       <li>*all,-comment - include all fields</li>
+         *                       </ul>
          * @throws JiraException when the create fails
          */
         public Issue execute(String includedFields) throws JiraException {
@@ -85,15 +83,14 @@ public class Issue extends Resource {
          * Executes the create action and specify which fields to retrieve.
          *
          * @param includedFields Specifies which issue fields will be included
-         * in the result.
-         * <br>Some examples how this parameter works:
-         * <ul>
-         * <li>*all - include all fields</li>
-         * <li>*navigable - include just navigable fields</li>
-         * <li>summary,comment - include just the summary and comments</li>
-         * <li>*all,-comment - include all fields</li>
-         * </ul>
-         *
+         *                       in the result.
+         *                       <br>Some examples how this parameter works:
+         *                       <ul>
+         *                       <li>*all - include all fields</li>
+         *                       <li>*navigable - include just navigable fields</li>
+         *                       <li>summary,comment - include just the summary and comments</li>
+         *                       <li>*all,-comment - include all fields</li>
+         *                       </ul>
          * @throws JiraException when the create fails
          */
         private Issue executeCreate(String includedFields) throws JiraException {
@@ -134,9 +131,8 @@ public class Issue extends Resource {
         /**
          * Appends a field to the update action.
          *
-         * @param name Name of the field
+         * @param name  Name of the field
          * @param value New field value
-         *
          * @return the current fluent update instance
          */
         public FluentCreate field(String name, Object value) {
@@ -182,6 +178,7 @@ public class Issue extends Resource {
 
         /**
          * A hyperlink to the object in the remote system.
+         *
          * @param url A hyperlink to the object in the remote system.
          * @return this instance
          */
@@ -193,6 +190,7 @@ public class Issue extends Resource {
 
         /**
          * The title of the remote object.
+         *
          * @param title The title of the remote object.
          * @return this instance
          */
@@ -204,7 +202,8 @@ public class Issue extends Resource {
 
         /**
          * Provide an icon for the remote link.
-         * @param url A 16x16 icon representing the type of the object in the remote system.
+         *
+         * @param url   A 16x16 icon representing the type of the object in the remote system.
          * @param title Text for the tooltip of the main icon describing the type of the object in the remote system.
          * @return this instance
          */
@@ -219,9 +218,10 @@ public class Issue extends Resource {
 
         /**
          * The status in the remote system.
-         * @param resolved if {@code true} the link to the issue will be in a strike through font.
-         * @param title Text for the tooltip of the main icon describing the type of the object in the remote system.
-         * @param iconUrl Text for the tooltip of the main icon describing the type of the object in the remote system.
+         *
+         * @param resolved  if {@code true} the link to the issue will be in a strike through font.
+         * @param title     Text for the tooltip of the main icon describing the type of the object in the remote system.
+         * @param iconUrl   Text for the tooltip of the main icon describing the type of the object in the remote system.
          * @param statusUrl A hyperlink for the tooltip of the the status icon.
          * @return this instance
          */
@@ -244,6 +244,7 @@ public class Issue extends Resource {
 
         /**
          * Textual summary of the remote object.
+         *
          * @param summary Textual summary of the remote object.
          * @return this instance
          */
@@ -256,6 +257,7 @@ public class Issue extends Resource {
         /**
          * Relationship between the remote object and the JIRA issue. This can be a verb or a noun.
          * It is used to group together links in the UI.
+         *
          * @param relationship Relationship between the remote object and the JIRA issue.
          * @return this instance
          */
@@ -269,6 +271,7 @@ public class Issue extends Resource {
          * The application for this remote link. Links are grouped on the type and name in the UI. The name-spaced
          * type of the application. It is not displayed to the user. Renderering plugins can register to render a
          * certain type of application.
+         *
          * @param type The name-spaced type of the application.
          * @param name The human-readable name of the remote application instance that stores the remote object.
          * @return this instance
@@ -287,6 +290,7 @@ public class Issue extends Resource {
         /**
          * Creates or updates the remote link if a {@link #globalId(String) global id} is given and there is already
          * a remote link for the specified global id.
+         *
          * @throws JiraException when the remote link creation fails
          */
         public void create() throws JiraException {
@@ -304,11 +308,8 @@ public class Issue extends Resource {
      * count issues with the given query.
      *
      * @param restclient REST client instance
-     *
-     * @param jql JQL statement
-     *
+     * @param jql        JQL statement
      * @return the count
-     *
      * @throws JiraException when the search fails
      */
     public static int count(RestClient restclient, String jql) throws JiraException {
@@ -384,9 +385,8 @@ public class Issue extends Resource {
         /**
          * Appends a field to the update action.
          *
-         * @param name Name of the field
+         * @param name  Name of the field
          * @param value New field value
-         *
          * @return the current fluent update instance
          */
         public FluentUpdate field(String name, Object value) {
@@ -403,24 +403,22 @@ public class Issue extends Resource {
         }
 
         /**
-         *  Adds a field value to the existing value set.
+         * Adds a field value to the existing value set.
          *
-         *  @param name Name of the field
-         *  @param value Field value to append
-         *
-         *  @return the current fluent update instance
+         * @param name  Name of the field
+         * @param value Field value to append
+         * @return the current fluent update instance
          */
         public FluentUpdate fieldAdd(String name, Object value) {
             return fieldOperation("add", name, value);
         }
 
         /**
-         *  Removes a field value from the existing value set.
+         * Removes a field value from the existing value set.
          *
-         *  @param name Name of the field
-         *  @param value Field value to remove
-         *
-         *  @return the current fluent update instance
+         * @param name  Name of the field
+         * @param value Field value to remove
+         * @return the current fluent update instance
          */
         public FluentUpdate fieldRemove(String name, Object value) {
             return fieldOperation("remove", name, value);
@@ -433,7 +431,9 @@ public class Issue extends Resource {
     public final class FluentTransition {
 
         Map<String, Object> fields = new HashMap<String, Object>();
+        String comment = null;
         List<Transition> transitions = null;
+
 
         private FluentTransition(List<Transition> transitions) {
             this.transitions = transitions;
@@ -443,8 +443,8 @@ public class Issue extends Resource {
             Transition result = null;
 
             for (Transition transition : transitions) {
-                if((isName && id.equals(transition.getName())
-                || (!isName && id.equals(transition.getId())))){
+                if ((isName && id.equals(transition.getName())
+                        || (!isName && id.equals(transition.getId())))) {
                     result = transition;
                 }
             }
@@ -462,13 +462,19 @@ public class Issue extends Resource {
             if (trans == null || trans.getFields() == null)
                 throw new JiraException("Transition is missing fields");
 
-            JSONObject fieldmap = new JSONObject();
+            JSONObject req = new JSONObject();
+            if (StringUtils.isNotBlank(comment)) {
+                JSONArray comments = new JSONArray();
+                comments.add(new JSONObject().accumulate("add", new JSONObject().accumulate("body", comment)));
+                req.put("update", new JSONObject().accumulate("comment", comments)
+                );
+            }
 
+            JSONObject fieldmap = new JSONObject();
             for (Map.Entry<String, Object> ent : fields.entrySet()) {
                 fieldmap.put(ent.getKey(), ent.getValue());
             }
 
-            JSONObject req = new JSONObject();
 
             if (fieldmap.size() > 0)
                 req.put("fields", fieldmap);
@@ -489,7 +495,6 @@ public class Issue extends Resource {
          * Executes the transition action.
          *
          * @param id Internal transition ID
-         *
          * @throws JiraException when the transition fails
          */
         public void execute(int id) throws JiraException {
@@ -500,7 +505,6 @@ public class Issue extends Resource {
          * Executes the transition action.
          *
          * @param transition Transition
-         *
          * @throws JiraException when the transition fails
          */
         public void execute(Transition transition) throws JiraException {
@@ -511,7 +515,6 @@ public class Issue extends Resource {
          * Executes the transition action.
          *
          * @param name Transition name
-         *
          * @throws JiraException when the transition fails
          */
         public void execute(String name) throws JiraException {
@@ -521,13 +524,34 @@ public class Issue extends Resource {
         /**
          * Appends a field to the transition action.
          *
-         * @param name Name of the field
+         * @param name  Name of the field
          * @param value New field value
-         *
          * @return the current fluent transition instance
          */
         public FluentTransition field(String name, Object value) {
             fields.put(name, value);
+            return this;
+        }
+
+        /**
+         * Appends a comment to the transition action.
+         *
+         * @param body The comment to add
+         * @return the current fluent transition instance
+         */
+        public FluentTransition comment(String body) {
+            this.comment = body;
+            return this;
+        }
+
+        /**
+         * Sets the given resolution with this transition action.
+         *
+         * @param value The resolution
+         * @return the current fluent transition instance
+         */
+        public FluentTransition resolution(String value) {
+            fields.put("resolution", new JSONObject().accumulate("name", value).toString());
             return this;
         }
     }
@@ -548,10 +572,10 @@ public class Issue extends Resource {
         private Integer startAt;
         private List<Issue> issues;
         private int total;
-        
+
         public IssueIterator(RestClient restclient, String jql, String includedFields,
                              String expandFields, Integer maxResults, Integer startAt)
-                             throws JiraException {
+                throws JiraException {
             this.restclient = restclient;
             this.jql = jql;
             this.includedFields = includedFields;
@@ -559,7 +583,7 @@ public class Issue extends Resource {
             this.maxResults = maxResults;
             this.startAt = startAt;
         }
-        
+
         @Override
         public boolean hasNext() {
             if (nextIssue != null) {
@@ -575,7 +599,7 @@ public class Issue extends Resource {
 
         @Override
         public Issue next() {
-            if (! hasNext()) {
+            if (!hasNext()) {
                 throw new NoSuchElementException();
             }
             Issue result = nextIssue;
@@ -586,14 +610,14 @@ public class Issue extends Resource {
         @Override
         public void remove() {
             throw new UnsupportedOperationException("Method remove() not support for class " +
-                                                    this.getClass().getName());
+                    this.getClass().getName());
         }
 
         /**
          * Gets the next issue, returning null if none more available
          * Will ask the next set of issues from the server if the end
          * of the current list of issues is reached.
-         * 
+         *
          * @return the next issue, null if none more available
          * @throws JiraException
          */
@@ -607,9 +631,9 @@ public class Issue extends Resource {
                     return currentPage.next();
                 }
             }
-            
+
             // check if we need to get the next set of issues
-            if (! currentPage.hasNext()) {
+            if (!currentPage.hasNext()) {
                 currentPage = getNextIssues().iterator();
             }
 
@@ -625,7 +649,7 @@ public class Issue extends Resource {
          * Execute the query to get the next set of issues.
          * Also sets the startAt, maxMresults, total and issues fields,
          * so that the SearchResult can access them.
-         * 
+         *
          * @return the next set of issues.
          * @throws JiraException
          */
@@ -650,9 +674,9 @@ public class Issue extends Resource {
                 throw new JiraException("JSON payload is malformed");
             }
 
-            
+
             Map map = (Map) result;
-    
+
             this.startAt = Field.getInteger(map.get("startAt"));
             this.maxResults = Field.getInteger(map.get("maxResults"));
             this.total = Field.getInteger(map.get("total"));
@@ -660,16 +684,16 @@ public class Issue extends Resource {
             return issues;
         }
     }
-    
+
     /**
      * Issue search results structure.
-     *
+     * <p>
      * The issues of the result can be retrived from this class in 2 ways.
-     *
+     * <p>
      * The first is to access the issues field directly. This is a list of Issue instances.
      * Note however that this will only contain the issues fetched in the initial search,
      * so its size will be the same as the max result value or below.
-     *
+     * <p>
      * The second way is to use the iterator methods. This will return an Iterator instance,
      * that will iterate over every result of the search, even if there is more than the max
      * result value. The price for this, is that the call to next has none determistic performence,
@@ -682,16 +706,16 @@ public class Issue extends Resource {
         public List<Issue> issues = null;
         private IssueIterator issueIterator;
 
-        public SearchResult(RestClient restclient, String jql, String includedFields, 
+        public SearchResult(RestClient restclient, String jql, String includedFields,
                             String expandFields, Integer maxResults, Integer startAt)
-                            throws JiraException {
+                throws JiraException {
             this.issueIterator = new IssueIterator(
-                restclient,
-                jql,
-                includedFields,
-                expandFields,
-                maxResults,
-                startAt
+                    restclient,
+                    jql,
+                    includedFields,
+                    expandFields,
+                    maxResults,
+                    startAt
             );
             /* backwards compatibility shim - first page only */
             this.issueIterator.hasNext();
@@ -703,7 +727,7 @@ public class Issue extends Resource {
 
         /**
          * All issues found.
-         * 
+         *
          * @return All issues found.
          */
         public Iterator<Issue> iterator() {
@@ -801,7 +825,7 @@ public class Issue extends Resource {
      * Creates an issue from a JSON payload.
      *
      * @param restclient REST client instance
-     * @param json JSON payload
+     * @param json       JSON payload
      */
     protected Issue(RestClient restclient, JSONObject json) {
         super(restclient);
@@ -817,7 +841,7 @@ public class Issue extends Resource {
         self = Field.getString(map.get("self"));
         key = Field.getString(map.get("key"));
 
-        fields = (Map)map.get("fields");
+        fields = (Map) map.get("fields");
         if (fields == null)
             return;
 
@@ -858,7 +882,7 @@ public class Issue extends Resource {
     }
 
     public static JSONObject getCreateMetadata(
-        RestClient restclient, String project, String issueType) throws JiraException {
+            RestClient restclient, String project, String issueType) throws JiraException {
 
         final String pval = project;
         final String itval = issueType;
@@ -870,8 +894,8 @@ public class Issue extends Resource {
             params.put("projectKeys", pval);
             params.put("issuetypeNames", itval);
             URI createuri = restclient.buildURI(
-                getBaseUri() + "issue/createmeta",
-                params);
+                    getBaseUri() + "issue/createmeta",
+                    params);
             result = restclient.get(createuri);
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve issue metadata", ex);
@@ -880,19 +904,19 @@ public class Issue extends Resource {
         if (!(result instanceof JSONObject))
             throw new JiraException("JSON payload is malformed");
 
-        JSONObject jo = (JSONObject)result;
+        JSONObject jo = (JSONObject) result;
 
         if (jo.isNullObject() || !jo.containsKey("projects") ||
                 !(jo.get("projects") instanceof JSONArray))
             throw new JiraException("Create metadata is malformed");
 
         List<Project> projects = Field.getResourceArray(
-            Project.class,
-            (JSONArray)jo.get("projects"),
-            restclient);
+                Project.class,
+                (JSONArray) jo.get("projects"),
+                restclient);
 
         if (projects.isEmpty() || projects.get(0).getIssueTypes().isEmpty())
-            throw new JiraException("Project '"+ project + "'  or issue type '" + issueType +
+            throw new JiraException("Project '" + project + "'  or issue type '" + issueType +
                     "' missing from create metadata. Do you have enough permissions?");
 
         return projects.get(0).getIssueTypes().get(0).getFields();
@@ -910,13 +934,13 @@ public class Issue extends Resource {
         if (!(result instanceof JSONObject))
             throw new JiraException("JSON payload is malformed");
 
-        JSONObject jo = (JSONObject)result;
+        JSONObject jo = (JSONObject) result;
 
         if (jo.isNullObject() || !jo.containsKey("fields") ||
                 !(jo.get("fields") instanceof JSONObject))
             throw new JiraException("Edit metadata is malformed");
 
-        return (JSONObject)jo.get("fields");
+        return (JSONObject) jo.get("fields");
     }
 
     public List<Transition> getTransitions() throws JiraException {
@@ -926,13 +950,13 @@ public class Issue extends Resource {
             Map<String, String> params = new HashMap<String, String>();
             params.put("expand", "transitions.fields");
             URI transuri = restclient.buildURI(
-                getRestUri(key) + "/transitions",params);
+                    getRestUri(key) + "/transitions", params);
             result = restclient.get(transuri);
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve transitions", ex);
         }
 
-        JSONObject jo = (JSONObject)result;
+        JSONObject jo = (JSONObject) result;
 
         if (jo.isNullObject() || !jo.containsKey("transitions") ||
                 !(jo.get("transitions") instanceof JSONArray))
@@ -941,7 +965,7 @@ public class Issue extends Resource {
         JSONArray transitions = (JSONArray) jo.get("transitions");
 
         List<Transition> trans = new ArrayList<Transition>();
-        for(Object obj: transitions){
+        for (Object obj : transitions) {
             JSONObject ob = (JSONObject) obj;
             trans.add(new Transition(restclient, ob));
         }
@@ -953,7 +977,6 @@ public class Issue extends Resource {
      * Adds an attachment to this issue.
      *
      * @param file java.io.File
-     *
      * @throws JiraException when the attachment creation fails
      */
     public JSON addAttachment(File file) throws JiraException {
@@ -967,10 +990,9 @@ public class Issue extends Resource {
     /**
      * Adds a remote link to this issue.
      *
-     * @param url Url of the remote link
-     * @param title Title of the remote link
+     * @param url     Url of the remote link
+     * @param title   Title of the remote link
      * @param summary Summary of the remote link
-     *
      * @throws JiraException when the link creation fails
      * @see #remoteLink()
      */
@@ -995,8 +1017,7 @@ public class Issue extends Resource {
     /**
      * Adds an attachments to this issue.
      *
-     * @param attachments  the attachments to add
-     *
+     * @param attachments the attachments to add
      * @throws JiraException when the attachments creation fails
      */
     public void addAttachments(NewAttachment... attachments) throws JiraException {
@@ -1017,15 +1038,14 @@ public class Issue extends Resource {
      * Removes an attachments.
      *
      * @param attachmentId attachment id to remove
-     *
      * @throws JiraException when the attachment removal fails
      */
     public void removeAttachment(String attachmentId) throws JiraException {
-    
+
         if (attachmentId == null) {
             throw new NullPointerException("attachmentId may not be null");
         }
-    
+
         try {
             restclient.delete(getBaseUri() + "attachment/" + attachmentId);
         } catch (Exception ex) {
@@ -1037,7 +1057,6 @@ public class Issue extends Resource {
      * Adds a comment to this issue.
      *
      * @param body Comment text
-     *
      * @throws JiraException when the comment creation fails
      */
     public Comment addComment(String body) throws JiraException {
@@ -1047,14 +1066,13 @@ public class Issue extends Resource {
     /**
      * Adds a comment to this issue with limited visibility.
      *
-     * @param body Comment text
+     * @param body    Comment text
      * @param visType Target audience type (role or group)
      * @param visName Name of the role or group to limit visibility to
-     *
      * @throws JiraException when the comment creation fails
      */
     public Comment addComment(String body, String visType, String visName)
-        throws JiraException {
+            throws JiraException {
 
         JSONObject req = new JSONObject();
         req.put("body", body);
@@ -1082,14 +1100,15 @@ public class Issue extends Resource {
         return new Comment(restclient, (JSONObject) result, key);
     }
 
-  /**
-   * Adds {@link WorkLog} to this issue
-   * @param comment provided comment
-   * @param startDate provided start date
-   * @param timeSpentSeconds provided time spent. This cannot be lower than 1m inute
-   * @return
-   * @throws JiraException when worklog creation fails
-   */
+    /**
+     * Adds {@link WorkLog} to this issue
+     *
+     * @param comment          provided comment
+     * @param startDate        provided start date
+     * @param timeSpentSeconds provided time spent. This cannot be lower than 1m inute
+     * @return
+     * @throws JiraException when worklog creation fails
+     */
     public WorkLog addWorkLog(String comment, DateTime startDate, long timeSpentSeconds) throws JiraException {
         try {
             if (comment == null)
@@ -1116,8 +1135,7 @@ public class Issue extends Resource {
      * Links this issue with another issue.
      *
      * @param issue Other issue key
-     * @param type Link type name
-     *
+     * @param type  Link type name
      * @throws JiraException when the link creation fails
      */
     public void link(String issue, String type) throws JiraException {
@@ -1128,9 +1146,8 @@ public class Issue extends Resource {
      * Links this issue with another issue and adds a comment.
      *
      * @param issue Other issue key
-     * @param type Link type name
-     * @param body Comment text
-     *
+     * @param type  Link type name
+     * @param body  Comment text
      * @throws JiraException when the link creation fails
      */
     public void link(String issue, String type, String body) throws JiraException {
@@ -1140,16 +1157,15 @@ public class Issue extends Resource {
     /**
      * Links this issue with another issue and adds a comment with limited visibility.
      *
-     * @param issue Other issue key
-     * @param type Link type name
-     * @param body Comment text
+     * @param issue   Other issue key
+     * @param type    Link type name
+     * @param body    Comment text
      * @param visType Target audience type (role or group)
      * @param visName Name of the role or group to limit visibility to
-     *
      * @throws JiraException when the link creation fails
      */
     public void link(String issue, String type, String body, String visType, String visName)
-        throws JiraException {
+            throws JiraException {
 
         JSONObject req = new JSONObject();
 
@@ -1191,30 +1207,27 @@ public class Issue extends Resource {
      * Creates a new JIRA issue.
      *
      * @param restclient REST client instance
-     * @param project Key of the project to create the issue in
-     * @param issueType Name of the issue type to create
-     *
+     * @param project    Key of the project to create the issue in
+     * @param issueType  Name of the issue type to create
      * @return a fluent create instance
-     *
      * @throws JiraException when the client fails to retrieve issue metadata
      */
     public static FluentCreate create(RestClient restclient, String project, String issueType)
-        throws JiraException {
+            throws JiraException {
 
         FluentCreate fc = new FluentCreate(
-            restclient,
-            getCreateMetadata(restclient, project, issueType));
+                restclient,
+                getCreateMetadata(restclient, project, issueType));
 
         return fc
-            .field(Field.PROJECT, project)
-            .field(Field.ISSUE_TYPE, issueType);
+                .field(Field.PROJECT, project)
+                .field(Field.ISSUE_TYPE, issueType);
     }
 
     /**
      * Creates a new sub-task.
      *
      * @return a fluent create instance
-     *
      * @throws JiraException when the client fails to retrieve issue metadata
      */
     public FluentCreate createSubtask() throws JiraException {
@@ -1245,10 +1258,8 @@ public class Issue extends Resource {
      * Retrieves the given issue record.
      *
      * @param restclient REST client instance
-     * @param key Issue key (PROJECT-123)
-     *
+     * @param key        Issue key (PROJECT-123)
      * @return an issue instance (issue includes all navigable fields)
-     *
      * @throws JiraException when the retrieval fails
      */
     public static Issue get(RestClient restclient, String key)
@@ -1260,22 +1271,18 @@ public class Issue extends Resource {
     /**
      * Retrieves the given issue record.
      *
-     * @param restclient REST client instance
-     *
-     * @param key Issue key (PROJECT-123)
-     *
+     * @param restclient     REST client instance
+     * @param key            Issue key (PROJECT-123)
      * @param includedFields Specifies which issue fields will be included in
-     * the result.
-     * <br>Some examples how this parameter works:
-     * <ul>
-     * <li>*all - include all fields</li>
-     * <li>*navigable - include just navigable fields</li>
-     * <li>summary,comment - include just the summary and comments</li>
-     * <li>*all,-comment - include all fields</li>
-     * </ul>
-     *
+     *                       the result.
+     *                       <br>Some examples how this parameter works:
+     *                       <ul>
+     *                       <li>*all - include all fields</li>
+     *                       <li>*navigable - include just navigable fields</li>
+     *                       <li>summary,comment - include just the summary and comments</li>
+     *                       <li>*all,-comment - include all fields</li>
+     *                       </ul>
      * @return an issue instance
-     *
      * @throws JiraException when the retrieval fails
      */
     public static Issue get(RestClient restclient, String key, final String includedFields)
@@ -1289,28 +1296,23 @@ public class Issue extends Resource {
     /**
      * Retrieves the given issue record.
      *
-     * @param restclient REST client instance
-     *
-     * @param key Issue key (PROJECT-123)
-     *
+     * @param restclient     REST client instance
+     * @param key            Issue key (PROJECT-123)
      * @param includedFields Specifies which issue fields will be included in
-     * the result.
-     * <br>Some examples how this parameter works:
-     * <ul>
-     * <li>*all - include all fields</li>
-     * <li>*navigable - include just navigable fields</li>
-     * <li>summary,comment - include just the summary and comments</li>
-     * <li>*all,-comment - include all fields</li>
-     * </ul>
-     *
-     * @param expand fields to expand when obtaining the issue
-     *
+     *                       the result.
+     *                       <br>Some examples how this parameter works:
+     *                       <ul>
+     *                       <li>*all - include all fields</li>
+     *                       <li>*navigable - include just navigable fields</li>
+     *                       <li>summary,comment - include just the summary and comments</li>
+     *                       <li>*all,-comment - include all fields</li>
+     *                       </ul>
+     * @param expand         fields to expand when obtaining the issue
      * @return an issue instance
-     *
      * @throws JiraException when the retrieval fails
      */
     public static Issue get(RestClient restclient, String key, final String includedFields,
-            final String expand) throws JiraException {
+                            final String expand) throws JiraException {
 
         Map<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("fields", includedFields);
@@ -1326,49 +1328,42 @@ public class Issue extends Resource {
      * results, then further calls can be made using different values for
      * the <code>startAt</code> field to obtain all the results.
      *
-     * @param restclient REST client instance
-     *
-     * @param jql JQL statement
-     *
+     * @param restclient     REST client instance
+     * @param jql            JQL statement
      * @param includedFields Specifies which issue fields will be included in
-     * the result.
-     * <br>Some examples how this parameter works:
-     * <ul>
-     * <li>*all - include all fields</li>
-     * <li>*navigable - include just navigable fields</li>
-     * <li>summary,comment - include just the summary and comments</li>
-     * <li>*all,-comment - include all fields</li>
-     * </ul>
-     *
-     * @param maxResults if non-<code>null</code>, defines the maximum number of
-     * results that can be returned 
-     *
-     * @param startAt if non-<code>null</code>, defines the first issue to
-     * return
-     *
-     * @param expandFields fields to expand when obtaining the issue
-     *
+     *                       the result.
+     *                       <br>Some examples how this parameter works:
+     *                       <ul>
+     *                       <li>*all - include all fields</li>
+     *                       <li>*navigable - include just navigable fields</li>
+     *                       <li>summary,comment - include just the summary and comments</li>
+     *                       <li>*all,-comment - include all fields</li>
+     *                       </ul>
+     * @param maxResults     if non-<code>null</code>, defines the maximum number of
+     *                       results that can be returned
+     * @param startAt        if non-<code>null</code>, defines the first issue to
+     *                       return
+     * @param expandFields   fields to expand when obtaining the issue
      * @return a search result structure with results
-     *
      * @throws JiraException when the search fails
      */
     public static SearchResult search(RestClient restclient, String jql,
-            String includedFields, String expandFields, Integer maxResults,
-            Integer startAt) throws JiraException {
+                                      String includedFields, String expandFields, Integer maxResults,
+                                      Integer startAt) throws JiraException {
 
         return new SearchResult(
-            restclient,
-            jql,
-            includedFields,
-            expandFields,
-            maxResults,
-            startAt
+                restclient,
+                jql,
+                includedFields,
+                expandFields,
+                maxResults,
+                startAt
         );
     }
 
     /**
      * Creates the URI to execute a jql search.
-     * 
+     *
      * @param restclient
      * @param jql
      * @param includedFields
@@ -1379,11 +1374,11 @@ public class Issue extends Resource {
      * @throws URISyntaxException
      */
     private static URI createSearchURI(RestClient restclient, String jql,
-            String includedFields, String expandFields, Integer maxResults,
-            Integer startAt) throws URISyntaxException {
+                                       String includedFields, String expandFields, Integer maxResults,
+                                       Integer startAt) throws URISyntaxException {
         Map<String, String> queryParams = new HashMap<String, String>();
         queryParams.put("jql", jql);
-        if(maxResults != null){
+        if (maxResults != null) {
             queryParams.put("maxResults", String.valueOf(maxResults));
         }
         if (includedFields != null) {
@@ -1416,15 +1411,14 @@ public class Issue extends Resource {
      * retrieve.
      *
      * @param includedFields Specifies which issue fields will be included in
-     * the result.
-     * <br>Some examples how this parameter works:
-     * <ul>
-     * <li>*all - include all fields</li>
-     * <li>*navigable - include just navigable fields</li>
-     * <li>summary,comment - include just the summary and comments</li>
-     * <li>*all,-comment - include all fields</li>
-     * </ul>
-     *
+     *                       the result.
+     *                       <br>Some examples how this parameter works:
+     *                       <ul>
+     *                       <li>*all - include all fields</li>
+     *                       <li>*navigable - include just navigable fields</li>
+     *                       <li>summary,comment - include just the summary and comments</li>
+     *                       <li>*all,-comment - include all fields</li>
+     *                       </ul>
      * @throws JiraException when the retrieval fails
      */
     public void refresh(final String includedFields) throws JiraException {
@@ -1439,7 +1433,6 @@ public class Issue extends Resource {
      * Gets an arbitrary field by its name.
      *
      * @param name Name of the field to retrieve
-     *
      * @return the field value or null if not found
      */
     public Object getField(String name) {
@@ -1451,7 +1444,6 @@ public class Issue extends Resource {
      * Begins a transition field chain.
      *
      * @return a fluent transition instance
-     *
      * @throws JiraException when the client fails to retrieve issue metadata
      */
     public FluentTransition transition() throws JiraException {
@@ -1462,7 +1454,6 @@ public class Issue extends Resource {
      * Begins an update field chain.
      *
      * @return a fluent update instance
-     *
      * @throws JiraException when the client fails to retrieve issue metadata
      */
     public FluentUpdate update() throws JiraException {
@@ -1501,7 +1492,6 @@ public class Issue extends Resource {
      * Adds a watcher to the issue.
      *
      * @param username Username of the watcher to add
-     *
      * @throws JiraException when the operation fails
      */
     public void addWatcher(String username) throws JiraException {
@@ -1511,7 +1501,7 @@ public class Issue extends Resource {
             restclient.post(uri, username);
         } catch (Exception ex) {
             throw new JiraException(
-                "Failed to add watcher (" + username + ") to issue " + key, ex
+                    "Failed to add watcher (" + username + ") to issue " + key, ex
             );
         }
     }
@@ -1520,7 +1510,6 @@ public class Issue extends Resource {
      * Removes a watcher to the issue.
      *
      * @param username Username of the watcher to remove
-     *
      * @throws JiraException when the operation fails
      */
     public void deleteWatcher(String username) throws JiraException {
@@ -1530,11 +1519,11 @@ public class Issue extends Resource {
             Map<String, String> connectionParams = new HashMap<String, String>();
             connectionParams.put("username", u);
             URI uri = restclient.buildURI(
-                getRestUri(key) + "/watchers", connectionParams);
+                    getRestUri(key) + "/watchers", connectionParams);
             restclient.delete(uri);
         } catch (Exception ex) {
             throw new JiraException(
-                "Failed to remove watch (" + username + ") from issue " + key, ex
+                    "Failed to remove watch (" + username + ") from issue " + key, ex
             );
         }
     }
@@ -1657,7 +1646,7 @@ public class Issue extends Resource {
     public Watches getWatches() throws JiraException {
         try {
             return Watches.get(restclient, key);
-        } catch (JiraException e){
+        } catch (JiraException e) {
             throw new JiraException("Failed to get watchers for issue " + key, e);
         }
     }
@@ -1703,7 +1692,7 @@ public class Issue extends Resource {
     public boolean delete(final boolean deleteSubtasks) throws JiraException {
         boolean result;
         try {
-                URI uri = restclient.buildURI(getBaseUri() + "issue/" + this.key, new HashMap<String, String>() {{
+            URI uri = restclient.buildURI(getBaseUri() + "issue/" + this.key, new HashMap<String, String>() {{
                 put("deleteSubtasks", String.valueOf(deleteSubtasks));
             }});
             result = (restclient.delete(uri) == null);

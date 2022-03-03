@@ -414,4 +414,53 @@ public class Utils {
         return jsonObject;
     }
 
+    public static JSONObject getTransitions() {
+        JSONObject jsonObject = (JSONObject) JSONSerializer.toJSON("{\n" +
+                "    \"expand\": \"transitions\",\n" +
+                "    \"transitions\": [\n" +
+                "        {\n" +
+                "            \"id\": \"2\",\n" +
+                "            \"name\": \"Close Issue\",\n" +
+                "            \"to\": {\n" +
+                "                \"self\": \"http://localhost:8090/jira/rest/api/2.0/status/10000\",\n" +
+                "                \"description\": \"The issue is currently being worked on.\",\n" +
+                "                \"iconUrl\": \"http://localhost:8090/jira/images/icons/progress.gif\",\n" +
+                "                \"name\": \"In Progress\",\n" +
+                "                \"id\": \"10000\",\n" +
+                "                \"statusCategory\": {\n" +
+                "                    \"self\": \"http://localhost:8090/jira/rest/api/2.0/statuscategory/1\",\n" +
+                "                    \"id\": 1,\n" +
+                "                    \"key\": \"in-flight\",\n" +
+                "                    \"colorName\": \"yellow\",\n" +
+                "                    \"name\": \"In Progress\"\n" +
+                "                }\n" +
+                "            },\n" +
+                "            \"fields\": {\n" +
+                "                \"summary\": {\n" +
+                "                    \"required\": false,\n" +
+                "                    \"schema\": {\n" +
+                "                        \"type\": \"array\",\n" +
+                "                        \"items\": \"option\",\n" +
+                "                        \"custom\": \"com.atlassian.jira.plugin.system.customfieldtypes:multiselect\",\n" +
+                "                        \"customId\": 10001\n" +
+                "                    },\n" +
+                "                    \"name\": \"My Multi Select\",\n" +
+                "                    \"fieldId\": \"customfield_10000\",\n" +
+                "                    \"hasDefaultValue\": false,\n" +
+                "                    \"operations\": [\n" +
+                "                        \"set\",\n" +
+                "                        \"add\"\n" +
+                "                    ],\n" +
+                "                    \"allowedValues\": [\n" +
+                "                        \"red\",\n" +
+                "                        \"blue\",\n" +
+                "                        \"default value\"\n" +
+                "                    ]\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }\n" +
+                "    ]\n" +
+                "}");
+        return jsonObject;
+    }
 }
