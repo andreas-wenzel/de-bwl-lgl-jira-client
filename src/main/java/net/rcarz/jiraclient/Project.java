@@ -19,7 +19,9 @@
 
 package net.rcarz.jiraclient;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,6 +135,21 @@ public class Project extends Resource {
         return Field.getResourceArray(Project.class, result, restclient);
     }
 
+    /**
+     * Deletes the Project.
+     * @param restclient REST client interface
+     * @param key Project key
+     * @throws JiraException on any problem deleting this problem
+     */
+    public static void delete(RestClient restclient, String key) throws JiraException {
+        try {
+            URI deleteURI = restclient.buildURI(getBaseUri() + "project/" + key);
+            restclient.delete(deleteURI);
+        } catch (Exception e) {
+            throw new JiraException("Problem on delete Project: "+ key, e);
+        }
+    }
+
     public List<User> getAssignableUsers() throws JiraException {
         JSON result = null;
 
@@ -203,5 +220,7 @@ public class Project extends Resource {
     public String getEmail() {
         return email;
     }
+
+
 }
 
