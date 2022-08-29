@@ -1,41 +1,38 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.kordamp.json.JSONObject;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 
-@RunWith(PowerMockRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class WorklogTest {
 
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Field.DATETIME_FORMAT);
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromRestException() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
+        Mockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
         WorkLog.get(mockRestClient, "issueNumber", "someID");
     }
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromNonJSON() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         WorkLog.get(mockRestClient,"issueNumber","someID");
     }
 
     @Test
     public void testToString() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         final JSONObject mockJSONObject = new JSONObject();
         String dateString = "2015-12-24";
 

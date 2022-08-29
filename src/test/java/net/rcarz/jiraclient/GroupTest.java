@@ -1,18 +1,17 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.junit.Test;
-import org.powermock.api.mockito.PowerMockito;
+import org.kordamp.json.JSON;
+import org.kordamp.json.JSONArray;
+import org.kordamp.json.JSONObject;
+import org.mockito.Mockito;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
 public class GroupTest {
 
@@ -68,7 +67,7 @@ public class GroupTest {
 
     @Test
     public void testGetGroup() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any()))
                 .thenReturn(getGroupJSON())
                 .thenReturn(getMemberJSON());
@@ -82,7 +81,7 @@ public class GroupTest {
 
     @Test
     public void testCreateGroup() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.post((URI) any(), (JSON) any())).thenReturn(getGroupJSON());
         Group group = Group.create(restClient, groupName);
         assertEquals(groupName, group.getName());
@@ -90,7 +89,7 @@ public class GroupTest {
 
     @Test
     public void testHasGroup() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any())).thenReturn(getGroupPickerJSON());
         assertTrue(Group.hasGroup(restClient, groupName));
         assertTrue(Group.hasGroup(restClient, "some-group"));
@@ -99,7 +98,7 @@ public class GroupTest {
 
     @Test
     public void testFindGroup() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any())).thenReturn(getGroupPickerJSON());
         Collection<String> searchResult = Group.findGroups(restClient, "group");
         assertTrue(searchResult.contains(groupName));
@@ -110,7 +109,7 @@ public class GroupTest {
 
     @Test
     public void testAddMember() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any()))
                 .thenReturn(getGroupJSON())
                 .thenReturn(getMemberJSON());
@@ -124,7 +123,7 @@ public class GroupTest {
 
     @Test
     public void testRemoveMember() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any()))
                 .thenReturn(getGroupJSON())
                 .thenReturn(getMemberJSON());
@@ -138,7 +137,7 @@ public class GroupTest {
 
     @Test
     public void testGetAllMembers() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any()))
                 .thenReturn(getGroupJSON())
                 .thenReturn(getMemberJSON());
@@ -148,7 +147,7 @@ public class GroupTest {
 
     @Test(expected = JiraException.class)
     public void testGetGroup_NotExisting() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any())).thenReturn(getErrorJSON());
 
         Group.get(restClient, groupName);
@@ -156,7 +155,7 @@ public class GroupTest {
 
     @Test(expected = JiraException.class)
     public void testRestError() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         when(restClient.get((URI) any())).thenThrow(new RestException("noop", 500, "nix", null));
 
         Group.get(restClient, groupName);

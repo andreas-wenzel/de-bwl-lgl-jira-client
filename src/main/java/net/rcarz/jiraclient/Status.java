@@ -19,10 +19,12 @@
 
 package net.rcarz.jiraclient;
 
+import org.kordamp.json.JSON;
+import org.kordamp.json.JSONObject;
+
 import java.util.Map;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONObject;
+
 
 /**
  * Represents an issue status.

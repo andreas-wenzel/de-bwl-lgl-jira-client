@@ -1,15 +1,15 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
+import org.kordamp.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
 
-@RunWith(PowerMockRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class VotesTest {
 
     @Test
@@ -35,20 +35,20 @@ public class VotesTest {
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromRestException() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
+        Mockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
         Votes.get(mockRestClient, "issueNumber");
     }
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromNonJSON() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         Votes.get(mockRestClient,"issueNumber");
     }
 
     @Test
     public void testGetVotesFromID() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         final JSONObject returnedFromService = new JSONObject();
 
         returnedFromService.put("self", "someURL");
@@ -56,7 +56,7 @@ public class VotesTest {
         returnedFromService.put("votes", 12);
         returnedFromService.put("hasVoted", true);
 
-        PowerMockito.when(mockRestClient.get(anyString())).thenReturn(returnedFromService);
+        Mockito.when(mockRestClient.get(anyString())).thenReturn(returnedFromService);
 
         final Votes votes = Votes.get(mockRestClient, "issueNumber");
 

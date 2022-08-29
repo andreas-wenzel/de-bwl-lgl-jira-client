@@ -1,30 +1,21 @@
 package net.rcarz.jiraclient;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import net.sf.json.JSON;
-import net.sf.json.JSONNull;
-
-import net.sf.json.JSONObject;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.junit.Assert;
 import org.junit.Test;
+import org.kordamp.json.JSON;
+import org.kordamp.json.JSONNull;
+import org.kordamp.json.JSONObject;
 import org.mockito.ArgumentCaptor;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mockito;
 
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.mock;
 
 public class IssueTest {
 
@@ -101,8 +92,8 @@ public class IssueTest {
 
     @Test
     public void testGetWatchers() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(restClient.get(matches(".*/watchers"))).thenReturn(Utils.getTestIssueWatchers());
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(matches(".*/watchers"))).thenReturn(Utils.getTestIssueWatchers());
         Issue issue = new Issue(restClient, Utils.getTestIssue());
         Watches watches = issue.getWatches();
 
@@ -199,7 +190,7 @@ public class IssueTest {
     public void testTransition() throws Exception {
         final ArgumentCaptor<String> postPath = ArgumentCaptor.forClass(String.class);
         final ArgumentCaptor<JSONObject> payload = ArgumentCaptor.forClass(JSONObject.class);
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
+        final RestClient restClient = Mockito.mock(RestClient.class);
 
         when(restClient.get(any(URI.class))).thenReturn(Utils.getTransitions());
         when(restClient.post(postPath.capture(), payload.capture())).thenReturn(null);
@@ -210,7 +201,7 @@ public class IssueTest {
         assertEquals("/rest/api/latest/issue/FILTA-43/transitions", postPath.getValue());
         assertEquals("{\"update\":" +
                 "{\"comment\":[{\"add\":{\"body\":\"There can be only one!\"}}]}," +
-                "\"fields\":{\"resolution\":{\"name\":\"Duplicate\"}}," +
+                "\"fields\":{\"resolution\":\"Duplicate\"}," +
                 "\"transition\":{\"id\":\"2\"}}", payload.getValue().toString(0));
     }
 

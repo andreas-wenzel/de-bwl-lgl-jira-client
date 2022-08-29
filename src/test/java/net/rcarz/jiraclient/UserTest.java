@@ -1,10 +1,10 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import org.kordamp.json.JSON;
+import org.kordamp.json.JSONArray;
+import org.kordamp.json.JSONObject;
 import org.junit.Test;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,7 +14,6 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 public class UserTest {
 
@@ -100,23 +99,23 @@ public class UserTest {
 
     @Test(expected = JiraException.class)
     public void testGetUserJSONError() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString(), anyMap())).thenReturn(null);
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString(), anyMap())).thenReturn(null);
         User.get(restClient, "username");
 
     }
 
     @Test(expected = JiraException.class)
     public void testGetUserRestError() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString(), anyMap())).thenThrow(Exception.class);
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString(), anyMap())).thenThrow(Exception.class);
         User.get(restClient, "username");
     }
 
     @Test
     public void testGetUser() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString(), anyMap())).thenReturn(getUserJSON());
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString(), anyMap())).thenReturn(getUserJSON());
         final User user = User.get(restClient, "username");
 
         assertEquals(user.getName(), username);
@@ -138,7 +137,7 @@ public class UserTest {
     @Test
     public void testGetAllUsers() throws Exception {
         JiraClient jiraClient = getJiraClientMock(GroupTest.getGroupJSON(), GroupTest.getMemberJSON());
-        when(jiraClient.getAllUsers(anyBoolean())).thenCallRealMethod();
+        Mockito.when(jiraClient.getAllUsers(anyBoolean())).thenCallRealMethod();
 
         Collection<User> members = jiraClient.getAllUsers(false);
         assertEquals(GroupTest.GROUP_SIZE, members.size());
@@ -147,9 +146,9 @@ public class UserTest {
 
     @Test
     public void testSetUserInactive() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString(), anyMap())).thenReturn(getUserJSON());
-        when(restClient.put(anyString(), any())).thenReturn(getUserUpdateJSON(false));
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString(), anyMap())).thenReturn(getUserJSON());
+        Mockito.when(restClient.put(anyString(), any())).thenReturn(getUserUpdateJSON(false));
 
         User user = User.get(restClient, "username");
         user.setInactive();
@@ -157,10 +156,10 @@ public class UserTest {
     }
 
     private JiraClient getJiraClientMock(JSON firstResponse, JSON secondResponse) throws RestException, IOException {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get((URI) any())).thenReturn(firstResponse).thenReturn(secondResponse);
-        JiraClient jiraClient = PowerMockito.mock(JiraClient.class);
-        when(jiraClient.getRestClient()).thenReturn(restClient);
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get((URI) any())).thenReturn(firstResponse).thenReturn(secondResponse);
+        JiraClient jiraClient = Mockito.mock(JiraClient.class);
+        Mockito.when(jiraClient.getRestClient()).thenReturn(restClient);
         return jiraClient;
     }
 }

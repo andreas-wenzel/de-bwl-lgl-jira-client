@@ -1,14 +1,11 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
+import org.kordamp.json.JSONObject;
 import org.junit.Test;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mockito;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertSame;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 
 public class IssueTypeTest {
@@ -45,8 +42,8 @@ public class IssueTypeTest {
 
     @Test
     public void testLoadIssueType() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString())).thenReturn(getTestJSON());
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString())).thenReturn(getTestJSON());
         IssueType issueType = IssueType.get(restClient,"someID");
         assertFalse(issueType.isSubtask());
         assertEquals(issueType.getName(), "Story");
@@ -58,14 +55,14 @@ public class IssueTypeTest {
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromRestException() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        when(mockRestClient.get(anyString())).thenThrow(RestException.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
+        Mockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
         IssueType.get(mockRestClient, "issueNumber");
     }
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromNonJSON() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         IssueType.get(mockRestClient,"issueNumber");
     }
 

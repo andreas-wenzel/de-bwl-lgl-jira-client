@@ -1,16 +1,13 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
 import org.junit.Before;
 import org.junit.Test;
+import org.kordamp.json.JSONObject;
+import org.kordamp.json.JSONSerializer;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 
 import static org.junit.Assert.assertEquals;
@@ -23,7 +20,7 @@ public class ComponentTest {
 
     @Before
     public void setup() throws RestException, IOException, URISyntaxException {
-        restClient = PowerMockito.mock(RestClient.class);
+        restClient = Mockito.mock(RestClient.class);
         Mockito.when(restClient.get(anyString())).thenReturn(getComponentJson());
         component = new Component(restClient, getComponentJson());
     }
@@ -45,10 +42,10 @@ public class ComponentTest {
 
     @Test
     public void updateComponent() throws Exception {
-        RestClient restClient = PowerMockito.mock(RestClient.class);
+        RestClient restClient = Mockito.mock(RestClient.class);
         component = new Component(restClient, getComponentJson());
         ArgumentCaptor<JSONObject> payloadSpy = ArgumentCaptor.forClass(JSONObject.class);
-        PowerMockito.when(restClient.put(anyString(), payloadSpy.capture())).thenReturn(getComponentJson());
+        Mockito.when(restClient.put(anyString(), payloadSpy.capture())).thenReturn(getComponentJson());
         component.update()
                 .name("New Component 1")
                 .description("New Description")

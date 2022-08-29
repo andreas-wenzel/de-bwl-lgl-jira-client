@@ -1,16 +1,15 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
+import org.kordamp.json.JSONObject;
 import org.junit.Test;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.when;
 
 public class StatusTest {
 
@@ -29,8 +28,8 @@ public class StatusTest {
 
     @Test
     public void testGetStatus() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        when(restClient.get(anyString())).thenReturn(getTestJSON());
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString())).thenReturn(getTestJSON());
         Status status = Status.get(restClient,"someID");
         assertEquals(status.getDescription(), description);
         assertEquals(status.getIconUrl(), iconURL);
@@ -40,14 +39,14 @@ public class StatusTest {
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromRestException() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        when(mockRestClient.get(anyString())).thenThrow(RestException.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
+        Mockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
         Status.get(mockRestClient, "issueNumber");
     }
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromNonJSON() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         Status.get(mockRestClient,"issueNumber");
     }
 

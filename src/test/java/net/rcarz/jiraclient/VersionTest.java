@@ -1,11 +1,10 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
+import org.kordamp.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -13,8 +12,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(JSONObject.class)
+@RunWith(MockitoJUnitRunner.class)
 public class VersionTest {
 
     @Test
@@ -36,8 +34,8 @@ public class VersionTest {
 
     @Test
     public void testGetVersion() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(restClient.get(anyString())).thenReturn(getTestJSON());
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString())).thenReturn(getTestJSON());
         Version version = Version.get(restClient, "id");
 
         assertEquals(version.getId(), "10200");
@@ -50,14 +48,14 @@ public class VersionTest {
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromRestException() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
+        Mockito.when(mockRestClient.get(anyString())).thenThrow(RestException.class);
         Version.get(mockRestClient, "id");
     }
 
     @Test(expected = JiraException.class)
     public void testJiraExceptionFromNonJSON() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         Version.get(mockRestClient, "id");
     }
 
@@ -75,38 +73,34 @@ public class VersionTest {
 
     @Test
     public void testMergeWith() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        final JSONObject mockJSON = PowerMockito.mock(JSONObject.class);
-        Version version = new Version(mockRestClient,mockJSON);
-        version.mergeWith(new Version(mockRestClient,mockJSON));
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
+        Version version = new Version(mockRestClient,getTestJSON());
+        version.mergeWith(new Version(mockRestClient,getTestJSON()));
         verify(mockRestClient, times(1)).put(anyString(), any(JSONObject.class));
     }
 
     @Test(expected = JiraException.class)
     public void testMergeWithFailed() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        final JSONObject mockJSON = PowerMockito.mock(JSONObject.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         when(mockRestClient.put(anyString(),any(JSONObject.class))).thenThrow(Exception.class);
-        Version version = new Version(mockRestClient,mockJSON);
-        version.mergeWith(new Version(mockRestClient,mockJSON));
+        Version version = new Version(mockRestClient,getTestJSON());
+        version.mergeWith(new Version(mockRestClient,getTestJSON()));
     }
 
     @Test
     public void testCopyTo() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        final JSONObject mockJSON = PowerMockito.mock(JSONObject.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         Version version = new Version(mockRestClient,getTestJSON());
-        version.copyTo(new Project(mockRestClient,mockJSON));
+        version.copyTo(new Project(mockRestClient,getTestJSON()));
         verify(mockRestClient, times(1)).post(anyString(),any(JSONObject.class));
     }
 
     @Test(expected = JiraException.class)
     public void testCopyToFailed() throws Exception {
-        final RestClient mockRestClient = PowerMockito.mock(RestClient.class);
-        final JSONObject mockJSON = PowerMockito.mock(JSONObject.class);
+        final RestClient mockRestClient = Mockito.mock(RestClient.class);
         when(mockRestClient.post(anyString(), any(JSONObject.class))).thenThrow(Exception.class);
         Version version = new Version(mockRestClient,getTestJSON());
-        version.copyTo(new Project(mockRestClient,mockJSON));
+        version.copyTo(new Project(mockRestClient,getTestJSON()));
     }
 
 

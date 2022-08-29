@@ -20,10 +20,10 @@
 package net.rcarz.jiraclient;
 
 import net.rcarz.utils.WorklogUtils;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.kordamp.json.JSON;
+import org.kordamp.json.JSONArray;
+import org.kordamp.json.JSONObject;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 
@@ -433,6 +433,7 @@ public class Issue extends Resource {
         Map<String, Object> fields = new HashMap<String, Object>();
         String comment = null;
         List<Transition> transitions = null;
+        JSONObject resolution = null;
 
 
         private FluentTransition(List<Transition> transitions) {
@@ -472,7 +473,7 @@ public class Issue extends Resource {
 
             JSONObject fieldmap = new JSONObject();
             for (Map.Entry<String, Object> ent : fields.entrySet()) {
-                fieldmap.put(ent.getKey(), ent.getValue());
+                fieldmap.accumulate(ent.getKey(), ent.getValue());
             }
 
 
@@ -551,7 +552,7 @@ public class Issue extends Resource {
          * @return the current fluent transition instance
          */
         public FluentTransition resolution(String value) {
-            fields.put("resolution", new JSONObject().accumulate("name", value).toString());
+            fields.put(Field.RESOLUTION, value);
             return this;
         }
     }

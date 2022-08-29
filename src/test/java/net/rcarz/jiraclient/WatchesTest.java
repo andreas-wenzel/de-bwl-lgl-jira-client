@@ -1,15 +1,11 @@
 package net.rcarz.jiraclient;
 
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
 import org.junit.Test;
-import org.powermock.api.mockito.PowerMockito;
+import org.mockito.Mockito;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.anyString;
-
-import java.util.ArrayList;
 
 public class WatchesTest {
 
@@ -32,22 +28,22 @@ public class WatchesTest {
 
     @Test(expected = JiraException.class)
     public void testGetWatchersNullReturned() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(restClient.get(anyString())).thenReturn(null);
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString())).thenReturn(null);
         Watches.get(restClient, "someID");
     }
 
     @Test(expected = JiraException.class)
     public void testGetWatchersGetThrows() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(restClient.get(anyString())).thenThrow(Exception.class);
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString())).thenThrow(Exception.class);
         Watches.get(restClient, "someID");
     }
 
     @Test
     public void testGetWatchers() throws Exception {
-        final RestClient restClient = PowerMockito.mock(RestClient.class);
-        PowerMockito.when(restClient.get(anyString())).thenReturn(Utils.getTestIssueWatchers());
+        final RestClient restClient = Mockito.mock(RestClient.class);
+        Mockito.when(restClient.get(anyString())).thenReturn(Utils.getTestIssueWatchers());
         final Watches watches = Watches.get(restClient, "someID");
 
         assertFalse(watches.isWatching());
