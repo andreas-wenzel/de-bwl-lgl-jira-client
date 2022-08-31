@@ -115,7 +115,7 @@ public class RestClient {
      */
     public URI buildURI(String path, Map<String, String> params) throws URISyntaxException {
         URIBuilder ub = new URIBuilder(uri);
-        ub.setPath(ub.getPath() + path);
+        ub.setPath((ub.getPath() == null ? "" : ub.getPath()) + path);
 
         if (params != null) {
             for (Map.Entry<String, String> ent : params.entrySet())

@@ -703,7 +703,7 @@ public final class Field {
             } else
                 json.put(ValueType.NAME.toString(), value.toString());
 
-            return json.toString();
+            return json;
         } else if (m.type.equals("project") || m.type.equals("issuelink")) {
             JSONObject json = new JSONObject();
 
@@ -715,7 +715,7 @@ public final class Field {
             } else
                 json.put(ValueType.KEY.toString(), value.toString());
 
-            return json.toString();
+            return json;
         } else if (m.type.equals("string") || (m.type.equals("securitylevel") || m.type.equals("option"))) {
             if (value == null)
                 return "";
@@ -725,7 +725,7 @@ public final class Field {
                 JSONObject json = new JSONObject();
                 ValueTuple tuple = (ValueTuple)value;
                 json.put(tuple.type, tuple.value.toString());
-                return json.toString();
+                return json;
             }
 
             return value.toString();
@@ -780,7 +780,7 @@ public final class Field {
                 json.put(ValueType.VALUE.toString(), item.toString());
         }
 
-        return json.toString();
+        return json;
     }
 
     /**

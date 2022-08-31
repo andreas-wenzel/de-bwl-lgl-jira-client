@@ -102,7 +102,7 @@ public class Issue extends Resource {
 
             for (Map.Entry<String, Object> ent : fields.entrySet()) {
                 Object newval = Field.toJson(ent.getKey(), ent.getValue(), createmeta);
-                fieldmap.put(ent.getKey(), newval);
+                fieldmap.accumulate(ent.getKey(), newval);
             }
 
             JSONObject req = new JSONObject();
@@ -552,7 +552,7 @@ public class Issue extends Resource {
          * @return the current fluent transition instance
          */
         public FluentTransition resolution(String value) {
-            fields.put(Field.RESOLUTION, value);
+            fields.put(Field.RESOLUTION, new JSONObject().accumulate("name", value));
             return this;
         }
     }
