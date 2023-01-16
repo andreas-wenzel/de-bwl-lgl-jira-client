@@ -1,17 +1,17 @@
 /**
  * jira-client - a simple JIRA REST client
  * Copyright (c) 2013 Bob Carroll (bob.carroll@alum.rit.edu)
- * 
+ * <p>
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
-
+ * <p>
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -19,19 +19,21 @@
 
 package net.rcarz.jiraclient;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.util.EntityUtils;
+import org.kordamp.json.JSON;
+import org.kordamp.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Map;
-
-import org.kordamp.json.JSON;
-import org.kordamp.json.JSONObject;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
+import java.util.Objects;
 
 /**
  * Represents an issue attachment.
@@ -49,7 +51,7 @@ public class Attachment extends Resource {
      * Creates an attachment from a JSON payload.
      *
      * @param restclient REST client instance
-     * @param json JSON payload
+     * @param json       JSON payload
      */
     protected Attachment(RestClient restclient, JSONObject json) {
         super(restclient);
@@ -78,16 +80,12 @@ public class Attachment extends Resource {
      * Retrieves the given attachment record.
      *
      * @param restclient REST client instance
-     * @param id Internal JIRA ID of the attachment
-     *
+     * @param id         Internal JIRA ID of the attachment
      * @return an attachment instance
-     *
      * @throws JiraException when the retrieval fails
      */
-    public static Attachment get(RestClient restclient, String id)
-        throws JiraException {
-
-        JSON result = null;
+    public static Attachment get(RestClient restclient, String id) throws JiraException {
+        JSON result;
 
         try {
             result = restclient.get(getBaseUri() + "attachment/" + id);
@@ -98,36 +96,49 @@ public class Attachment extends Resource {
         if (!(result instanceof JSONObject))
             throw new JiraException("JSON payload is malformed");
 
-        return new Attachment(restclient, (JSONObject)result);
+        return new Attachment(restclient, (JSONObject) result);
     }
-    
+
     /**
      * Downloads attachment to byte array
      *
      * @return a byte[]
-     *
      * @throws JiraException when the download fails
      */
-    public byte[] download() 
-    	throws JiraException{
-    	ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    	try{
-        	HttpGet get = new HttpGet(content);
-        	HttpResponse response = restclient.getHttpClient().execute(get);
-        	HttpEntity entity = response.getEntity();
-        	if (entity != null) {
-        	    InputStream inputStream = entity.getContent();
-        	    int next = inputStream.read();
-        	    while (next > -1) {
-        	        bos.write(next);
-        	        next = inputStream.read();
-        	    }
-        	    bos.flush();
-        	}
-    	}catch(IOException e){
-    		  throw new JiraException(String.format("Failed downloading attachment from %s: %s", this.content, e.getMessage()));
-    	}
-    	return bos.toByteArray();
+    public byte[] download() throws JiraException {
+        HttpResponse response = null;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            HttpGet get = new HttpGet(content);
+            response = restclient.getHttpClient().execute(get);
+
+            // check response
+            StatusLine sl = response.getStatusLine();
+            if (sl.getStatusCode() > 300) {
+                throw new JiraException(String.format("Download failed for Attachment: %s with Status: %d - %s",
+                        this.content, sl.getStatusCode(), sl.getReasonPhrase()));
+            }
+
+            // get content
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                try (InputStream inputStream = entity.getContent()) {
+                    int next = inputStream.read();
+                    while (next > -1) {
+                        bos.write(next);
+                        next = inputStream.read();
+                    }
+                }
+            } else {
+                // should not happen, but anyway ...
+                throw new JiraException("HttpResponse did not contain the Attachment-Content for: " + this.content);
+            }
+            return bos.toByteArray();
+        } catch (IOException e) {
+            throw new JiraException(String.format("Failed downloading attachment from %s: %s", this.content, e.getMessage()));
+        } finally {
+            // release http-connection in any case
+            if (Objects.nonNull(response)) EntityUtils.consumeQuietly(response.getEntity());
+        }
     }
 
     @Override
@@ -161,7 +172,7 @@ public class Attachment extends Resource {
 
     private String getAttachmentId() {
         String[] parts = self.split("/");
-        return parts[parts.length-1];
+        return parts[parts.length - 1];
     }
 }
 
