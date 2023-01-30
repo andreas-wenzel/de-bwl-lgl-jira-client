@@ -23,14 +23,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.util.EntityUtils;
 import org.kordamp.json.JSON;
 import org.kordamp.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
@@ -139,6 +142,47 @@ public class Attachment extends Resource {
             // release http-connection in any case
             if (Objects.nonNull(response)) EntityUtils.consumeQuietly(response.getEntity());
         }
+    }
+
+    /**
+     * Download the Attachment to a file (suitable for big-attachments).
+     *
+     * @param directory The directory where to put the file inside a sub-directory
+     * @return The downloaded Attachment within the given directory
+     * @throws IOException on any issue writing the attachment-file
+     * @throws JiraException on any issue downloading the attachment-content
+     */
+    public File download(Path directory) throws IOException, JiraException {
+        Path subDirectory = Files.createTempDirectory(directory, "attachment-" + getId());
+        File download = new File(subDirectory.toFile(), getFileName());
+        if (!download.createNewFile()) {
+            throw new IOException("Failed to create local file for downloading the Attachment: " + download);
+        }
+
+        HttpResponse response = null;
+        try (FileOutputStream out = new FileOutputStream(download);
+             BufferedOutputStream writer = new BufferedOutputStream(out)) {
+            URIBuilder ub = new URIBuilder(getContentUrl());
+            HttpGet req = new HttpGet(ub.build());
+            restclient.getCreds().authenticate(req);
+            response = restclient.getHttpClient().execute(req);
+            // check response
+            StatusLine sl = response.getStatusLine();
+            if (sl.getStatusCode() > 300) {
+                throw new JiraException(String.format("Download failed for Attachment: %s with Status: %d - %s",
+                        this.content, sl.getStatusCode(), sl.getReasonPhrase()));
+            }
+
+            response.getEntity().writeTo(writer);
+        } catch (URISyntaxException | ClientProtocolException e) {
+            // should not happen, but anyway
+            throw new AssertionError("JIRA provided illegal Download-URL for attachment: " + getContentUrl());
+        } finally {
+            if (Objects.nonNull(response)) {
+                EntityUtils.consumeQuietly(response.getEntity());
+            }
+        }
+        return download;
     }
 
     @Override
