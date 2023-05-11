@@ -24,6 +24,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.FileBody;
@@ -36,6 +37,7 @@ import org.kordamp.json.JSONSerializer;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -195,7 +197,8 @@ public class RestClient {
             throws RestException, IOException {
         if (attachments != null) {
             req.setHeader("X-Atlassian-Token", "no-check");
-            MultipartEntity ent = new MultipartEntity();
+            // LGLJIRSYN-266: we use Browser-Mode, so the file Parameter will be interpreted as UTF-8
+            MultipartEntity ent = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE, null, StandardCharsets.UTF_8);
             for (Issue.NewAttachment attachment : attachments) {
                 String filename = attachment.getFilename();
                 Object content = attachment.getContent();
