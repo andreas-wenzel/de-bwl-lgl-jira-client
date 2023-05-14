@@ -184,13 +184,10 @@ public class RestClient {
     private JSON request(HttpEntityEnclosingRequestBase req, File file)
             throws RestException, IOException {
         if (file != null) {
-            File fileUpload = file;
-            req.setHeader("X-Atlassian-Token", "no-check");
-            MultipartEntity ent = new MultipartEntity();
-            ent.addPart("file", new FileBody(fileUpload));
-            req.setEntity(ent);
+            return request(req, new Issue.NewAttachment(file));
+        } else {
+            throw new IOException("parameter: file was null");
         }
-        return request(req);
     }
 
     private JSON request(HttpEntityEnclosingRequestBase req, Issue.NewAttachment... attachments)
