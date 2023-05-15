@@ -3,7 +3,7 @@
 
   <groupId>de.bwl.lgl.jira.client</groupId>
   <artifactId>jira-client</artifactId>
-  <version>1.8.0-${revision}</version>
+  <version>1.9.0-${revision}</version>
   <packaging>jar</packaging>
 
   <description>A simple JIRA REST client</description>
@@ -62,7 +62,7 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.5.13</version>
+      <version>4.5.14</version>
     </dependency>
 
     <dependency>
@@ -80,7 +80,7 @@
     <dependency>
       <groupId>org.kordamp.json</groupId>
       <artifactId>json-lib-core</artifactId>
-      <version>3.0.2</version>
+      <version>3.0.3</version>
     </dependency>
 
     <dependency>
@@ -118,7 +118,7 @@
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy-all</artifactId>
-      <version>3.0.12</version>
+      <version>3.0.17</version>
       <scope>test</scope>
       <type>pom</type>
     </dependency>
