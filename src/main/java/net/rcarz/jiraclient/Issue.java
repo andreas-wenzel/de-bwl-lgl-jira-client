@@ -21,11 +21,11 @@ package net.rcarz.jiraclient;
 
 import net.rcarz.utils.WorklogUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.kordamp.json.JSON;
 import org.kordamp.json.JSONArray;
 import org.kordamp.json.JSONObject;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 
 import java.io.File;
 import java.io.InputStream;
@@ -38,758 +38,8 @@ import java.util.*;
  */
 public class Issue extends Resource {
 
-    /**
-     * Used to chain fields to a create action.
-     */
-    public static final class FluentCreate {
-
-        Map<String, Object> fields = new HashMap<String, Object>();
-        RestClient restclient = null;
-        JSONObject createmeta = null;
-
-        private FluentCreate(RestClient restclient, JSONObject createmeta) {
-            this.restclient = restclient;
-            this.createmeta = createmeta;
-        }
-
-        /**
-         * Executes the create action (issue includes all fields).
-         *
-         * @throws JiraException when the create fails
-         */
-        public Issue execute() throws JiraException {
-            return executeCreate(null);
-        }
-
-        /**
-         * Executes the create action and specify which fields to retrieve.
-         *
-         * @param includedFields Specifies which issue fields will be included
-         *                       in the result.
-         *                       <br>Some examples how this parameter works:
-         *                       <ul>
-         *                       <li>*all - include all fields</li>
-         *                       <li>*navigable - include just navigable fields</li>
-         *                       <li>summary,comment - include just the summary and comments</li>
-         *                       <li>*all,-comment - include all fields</li>
-         *                       </ul>
-         * @throws JiraException when the create fails
-         */
-        public Issue execute(String includedFields) throws JiraException {
-            return executeCreate(includedFields);
-        }
-
-        /**
-         * Executes the create action and specify which fields to retrieve.
-         *
-         * @param includedFields Specifies which issue fields will be included
-         *                       in the result.
-         *                       <br>Some examples how this parameter works:
-         *                       <ul>
-         *                       <li>*all - include all fields</li>
-         *                       <li>*navigable - include just navigable fields</li>
-         *                       <li>summary,comment - include just the summary and comments</li>
-         *                       <li>*all,-comment - include all fields</li>
-         *                       </ul>
-         * @throws JiraException when the create fails
-         */
-        private Issue executeCreate(String includedFields) throws JiraException {
-            JSONObject fieldmap = new JSONObject();
-
-            if (fields.size() == 0) {
-                throw new JiraException("No fields were given for create");
-            }
-
-            for (Map.Entry<String, Object> ent : fields.entrySet()) {
-                Object newval = Field.toJson(ent.getKey(), ent.getValue(), createmeta);
-                fieldmap.accumulate(ent.getKey(), newval);
-            }
-
-            JSONObject req = new JSONObject();
-            req.put("fields", fieldmap);
-
-            JSON result = null;
-
-            try {
-                result = restclient.post(getRestUri(null), req);
-            } catch (Exception ex) {
-                throw new JiraException("Failed to create issue", ex);
-            }
-
-            if (!(result instanceof JSONObject) || !((JSONObject) result).containsKey("key")
-                    || !(((JSONObject) result).get("key") instanceof String)) {
-                throw new JiraException("Unexpected result on create issue");
-            }
-
-            if (includedFields != null) {
-                return Issue.get(restclient, (String) ((JSONObject) result).get("key"), includedFields);
-            } else {
-                return Issue.get(restclient, (String) ((JSONObject) result).get("key"));
-            }
-        }
-
-        /**
-         * Appends a field to the update action.
-         *
-         * @param name  Name of the field
-         * @param value New field value
-         * @return the current fluent update instance
-         */
-        public FluentCreate field(String name, Object value) {
-            fields.put(name, value);
-            return this;
-        }
-    }
-
-
-    /**
-     * Used to {@link #create() create} remote links. Provide at least the {@link #url(String)} or
-     * {@link #globalId(String) global id} and the {@link #title(String) title}.
-     */
-    public static final class FluentRemoteLink {
-
-        final private RestClient restclient;
-        final private String key;
-        final private JSONObject request;
-        final private JSONObject object;
-
-
-        private FluentRemoteLink(final RestClient restclient, String key) {
-            this.restclient = restclient;
-            this.key = key;
-            request = new JSONObject();
-            object = new JSONObject();
-        }
-
-
-        /**
-         * A globally unique identifier which uniquely identifies the remote application and the remote object within
-         * the remote system. The maximum length is 255 characters. This call sets also the {@link #url(String) url}.
-         *
-         * @param globalId the global id
-         * @return this instance
-         */
-        public FluentRemoteLink globalId(final String globalId) {
-            request.put("globalId", globalId);
-            url(globalId);
-            return this;
-        }
-
-
-        /**
-         * A hyperlink to the object in the remote system.
-         *
-         * @param url A hyperlink to the object in the remote system.
-         * @return this instance
-         */
-        public FluentRemoteLink url(final String url) {
-            object.put("url", url);
-            return this;
-        }
-
-
-        /**
-         * The title of the remote object.
-         *
-         * @param title The title of the remote object.
-         * @return this instance
-         */
-        public FluentRemoteLink title(final String title) {
-            object.put("title", title);
-            return this;
-        }
-
-
-        /**
-         * Provide an icon for the remote link.
-         *
-         * @param url   A 16x16 icon representing the type of the object in the remote system.
-         * @param title Text for the tooltip of the main icon describing the type of the object in the remote system.
-         * @return this instance
-         */
-        public FluentRemoteLink icon(final String url, final String title) {
-            final JSONObject icon = new JSONObject();
-            icon.put("url16x16", url);
-            icon.put("title", title);
-            object.put("icon", icon);
-            return this;
-        }
-
-
-        /**
-         * The status in the remote system.
-         *
-         * @param resolved  if {@code true} the link to the issue will be in a strike through font.
-         * @param title     Text for the tooltip of the main icon describing the type of the object in the remote system.
-         * @param iconUrl   Text for the tooltip of the main icon describing the type of the object in the remote system.
-         * @param statusUrl A hyperlink for the tooltip of the the status icon.
-         * @return this instance
-         */
-        public FluentRemoteLink status(final boolean resolved, final String iconUrl, final String title, final String statusUrl) {
-            final JSONObject status = new JSONObject();
-            status.put("resolved", Boolean.toString(resolved));
-            final JSONObject icon = new JSONObject();
-            icon.put("title", title);
-            if (iconUrl != null) {
-                icon.put("url16x16", iconUrl);
-            }
-            if (statusUrl != null) {
-                icon.put("link", statusUrl);
-            }
-            status.put("icon", icon);
-            object.put("status", status);
-            return this;
-        }
-
-
-        /**
-         * Textual summary of the remote object.
-         *
-         * @param summary Textual summary of the remote object.
-         * @return this instance
-         */
-        public FluentRemoteLink summary(final String summary) {
-            object.put("summary", summary);
-            return this;
-        }
-
-
-        /**
-         * Relationship between the remote object and the JIRA issue. This can be a verb or a noun.
-         * It is used to group together links in the UI.
-         *
-         * @param relationship Relationship between the remote object and the JIRA issue.
-         * @return this instance
-         */
-        public FluentRemoteLink relationship(final String relationship) {
-            request.put("relationship", relationship);
-            return this;
-        }
-
-
-        /**
-         * The application for this remote link. Links are grouped on the type and name in the UI. The name-spaced
-         * type of the application. It is not displayed to the user. Renderering plugins can register to render a
-         * certain type of application.
-         *
-         * @param type The name-spaced type of the application.
-         * @param name The human-readable name of the remote application instance that stores the remote object.
-         * @return this instance
-         */
-        public FluentRemoteLink application(final String type, final String name) {
-            final JSONObject application = new JSONObject();
-            if (type != null) {
-                application.put("type", type);
-            }
-            application.put("name", name);
-            request.put("application", application);
-            return this;
-        }
-
-
-        /**
-         * Creates or updates the remote link if a {@link #globalId(String) global id} is given and there is already
-         * a remote link for the specified global id.
-         *
-         * @throws JiraException when the remote link creation fails
-         */
-        public void create() throws JiraException {
-            try {
-                request.put("object", object);
-                restclient.post(getRestUri(key) + "/remotelink", request);
-            } catch (Exception ex) {
-                throw new JiraException("Failed add remote link to issue " + key, ex);
-            }
-        }
-
-    }
-
-    /**
-     * count issues with the given query.
-     *
-     * @param restclient REST client instance
-     * @param jql        JQL statement
-     * @return the count
-     * @throws JiraException when the search fails
-     */
-    public static int count(RestClient restclient, String jql) throws JiraException {
-        final String j = jql;
-        JSON result = null;
-        try {
-            Map<String, String> queryParams = new HashMap<String, String>();
-            queryParams.put("jql", j);
-            queryParams.put("maxResults", "1");
-            URI searchUri = restclient.buildURI(getBaseUri() + "search", queryParams);
-            result = restclient.get(searchUri);
-        } catch (Exception ex) {
-            throw new JiraException("Failed to search issues", ex);
-        }
-
-        if (!(result instanceof JSONObject)) {
-            throw new JiraException("JSON payload is malformed");
-        }
-        Map map = (Map) result;
-        return Field.getInteger(map.get("total"));
-    }
-
-    /**
-     * Used to chain fields to an update action.
-     */
-    public final class FluentUpdate {
-
-        Map<String, Object> fields = new HashMap<String, Object>();
-        Map<String, List> fieldOpers = new HashMap<String, List>();
-        JSONObject editmeta = null;
-
-        private FluentUpdate(JSONObject editmeta) {
-            this.editmeta = editmeta;
-        }
-
-        /**
-         * Executes the update action.
-         *
-         * @throws JiraException when the update fails
-         */
-        public void execute() throws JiraException {
-            JSONObject fieldmap = new JSONObject();
-            JSONObject updatemap = new JSONObject();
-
-            if (fields.size() == 0 && fieldOpers.size() == 0)
-                throw new JiraException("No fields were given for update");
-
-            for (Map.Entry<String, Object> ent : fields.entrySet()) {
-                Object newval = Field.toJson(ent.getKey(), ent.getValue(), editmeta);
-                fieldmap.put(ent.getKey(), newval);
-            }
-
-            for (Map.Entry<String, List> ent : fieldOpers.entrySet()) {
-                Object newval = Field.toJson(ent.getKey(), ent.getValue(), editmeta);
-                updatemap.put(ent.getKey(), newval);
-            }
-
-            JSONObject req = new JSONObject();
-
-            if (fieldmap.size() > 0)
-                req.put("fields", fieldmap);
-
-            if (updatemap.size() > 0)
-                req.put("update", updatemap);
-
-            try {
-                restclient.put(getRestUri(key), req);
-            } catch (Exception ex) {
-                throw new JiraException("Failed to update issue " + key, ex);
-            }
-        }
-
-        /**
-         * Appends a field to the update action.
-         *
-         * @param name  Name of the field
-         * @param value New field value
-         * @return the current fluent update instance
-         */
-        public FluentUpdate field(String name, Object value) {
-            fields.put(name, value);
-            return this;
-        }
-
-        private FluentUpdate fieldOperation(String oper, String name, Object value) {
-            if (!fieldOpers.containsKey(name))
-                fieldOpers.put(name, new ArrayList());
-
-            fieldOpers.get(name).add(new Field.Operation(oper, value));
-            return this;
-        }
-
-        /**
-         * Adds a field value to the existing value set.
-         *
-         * @param name  Name of the field
-         * @param value Field value to append
-         * @return the current fluent update instance
-         */
-        public FluentUpdate fieldAdd(String name, Object value) {
-            return fieldOperation("add", name, value);
-        }
-
-        /**
-         * Removes a field value from the existing value set.
-         *
-         * @param name  Name of the field
-         * @param value Field value to remove
-         * @return the current fluent update instance
-         */
-        public FluentUpdate fieldRemove(String name, Object value) {
-            return fieldOperation("remove", name, value);
-        }
-    }
-
-    /**
-     * Used to chain fields to a transition action.
-     */
-    public final class FluentTransition {
-
-        Map<String, Object> fields = new HashMap<String, Object>();
-        String comment = null;
-        List<Transition> transitions = null;
-        JSONObject resolution = null;
-
-
-        private FluentTransition(List<Transition> transitions) {
-            this.transitions = transitions;
-        }
-
-        private Transition getTransition(String id, boolean isName) throws JiraException {
-            Transition result = null;
-
-            for (Transition transition : transitions) {
-                if ((isName && id.equals(transition.getName())
-                        || (!isName && id.equals(transition.getId())))) {
-                    result = transition;
-                }
-            }
-
-            if (result == null) {
-                final String allTransitionNames = Arrays.toString(transitions.toArray());
-                throw new JiraException("Transition '" + id + "' was not found. Known transitions are:" + allTransitionNames);
-            }
-
-            return result;
-        }
-
-        private void realExecute(Transition trans) throws JiraException {
-
-            if (trans == null || trans.getFields() == null)
-                throw new JiraException("Transition is missing fields");
-
-            JSONObject req = new JSONObject();
-            if (StringUtils.isNotBlank(comment)) {
-                JSONArray comments = new JSONArray();
-                comments.add(new JSONObject().accumulate("add", new JSONObject().accumulate("body", comment)));
-                req.put("update", new JSONObject().accumulate("comment", comments)
-                );
-            }
-
-            JSONObject fieldmap = new JSONObject();
-            for (Map.Entry<String, Object> ent : fields.entrySet()) {
-                fieldmap.accumulate(ent.getKey(), ent.getValue());
-            }
-
-
-            if (fieldmap.size() > 0)
-                req.put("fields", fieldmap);
-
-            JSONObject t = new JSONObject();
-            t.put("id", Field.getString(trans.getId()));
-
-            req.put("transition", t);
-
-            try {
-                restclient.post(getRestUri(key) + "/transitions", req);
-            } catch (Exception ex) {
-                throw new JiraException("Failed to transition issue " + key, ex);
-            }
-        }
-
-        /**
-         * Executes the transition action.
-         *
-         * @param id Internal transition ID
-         * @throws JiraException when the transition fails
-         */
-        public void execute(int id) throws JiraException {
-            realExecute(getTransition(Integer.toString(id), false));
-        }
-
-        /**
-         * Executes the transition action.
-         *
-         * @param transition Transition
-         * @throws JiraException when the transition fails
-         */
-        public void execute(Transition transition) throws JiraException {
-            realExecute(transition);
-        }
-
-        /**
-         * Executes the transition action.
-         *
-         * @param name Transition name
-         * @throws JiraException when the transition fails
-         */
-        public void execute(String name) throws JiraException {
-            realExecute(getTransition(name, true));
-        }
-
-        /**
-         * Appends a field to the transition action.
-         *
-         * @param name  Name of the field
-         * @param value New field value
-         * @return the current fluent transition instance
-         */
-        public FluentTransition field(String name, Object value) {
-            fields.put(name, value);
-            return this;
-        }
-
-        /**
-         * Appends a comment to the transition action.
-         *
-         * @param body The comment to add
-         * @return the current fluent transition instance
-         */
-        public FluentTransition comment(String body) {
-            this.comment = body;
-            return this;
-        }
-
-        /**
-         * Sets the given resolution with this transition action.
-         *
-         * @param value The resolution
-         * @return the current fluent transition instance
-         */
-        public FluentTransition resolution(String value) {
-            fields.put(Field.RESOLUTION, new JSONObject().accumulate("name", value));
-            return this;
-        }
-    }
-
-
-    /**
-     * Iterates over all issues in the query by getting the next page of
-     * issues when the iterator reaches the last of the current page.
-     */
-    private static class IssueIterator implements Iterator<Issue> {
-        private Iterator<Issue> currentPage;
-        private RestClient restclient;
-        private Issue nextIssue;
-        private Integer maxResults = -1;
-        private String jql;
-        private String includedFields;
-        private String expandFields;
-        private Integer startAt;
-        private List<Issue> issues;
-        private int total;
-
-        public IssueIterator(RestClient restclient, String jql, String includedFields,
-                             String expandFields, Integer maxResults, Integer startAt)
-                throws JiraException {
-            this.restclient = restclient;
-            this.jql = jql;
-            this.includedFields = includedFields;
-            this.expandFields = expandFields;
-            this.maxResults = maxResults;
-            this.startAt = startAt;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (nextIssue != null) {
-                return true;
-            }
-            try {
-                nextIssue = getNextIssue();
-            } catch (JiraException e) {
-                throw new RuntimeException(e);
-            }
-            return nextIssue != null;
-        }
-
-        @Override
-        public Issue next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-            Issue result = nextIssue;
-            nextIssue = null;
-            return result;
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("Method remove() not support for class " +
-                    this.getClass().getName());
-        }
-
-        /**
-         * Gets the next issue, returning null if none more available
-         * Will ask the next set of issues from the server if the end
-         * of the current list of issues is reached.
-         *
-         * @return the next issue, null if none more available
-         * @throws JiraException
-         */
-        private Issue getNextIssue() throws JiraException {
-            // first call
-            if (currentPage == null) {
-                currentPage = getNextIssues().iterator();
-                if (currentPage == null || !currentPage.hasNext()) {
-                    return null;
-                } else {
-                    return currentPage.next();
-                }
-            }
-
-            // check if we need to get the next set of issues
-            if (!currentPage.hasNext()) {
-                currentPage = getNextIssues().iterator();
-            }
-
-            // return the next item if available
-            if (currentPage.hasNext()) {
-                return currentPage.next();
-            } else {
-                return null;
-            }
-        }
-
-        /**
-         * Execute the query to get the next set of issues.
-         * Also sets the startAt, maxMresults, total and issues fields,
-         * so that the SearchResult can access them.
-         *
-         * @return the next set of issues.
-         * @throws JiraException
-         */
-        private List<Issue> getNextIssues() throws JiraException {
-            if (issues == null && startAt == null) {
-                startAt = Integer.valueOf(0);
-            } else if (issues != null) {
-                startAt = startAt + issues.size();
-            }
-
-            JSON result = null;
-
-            try {
-                URI searchUri = createSearchURI(restclient, jql, includedFields,
-                        expandFields, maxResults, startAt);
-                result = restclient.get(searchUri);
-            } catch (Exception ex) {
-                throw new JiraException("Failed to search issues", ex);
-            }
-
-            if (!(result instanceof JSONObject)) {
-                throw new JiraException("JSON payload is malformed");
-            }
-
-
-            Map map = (Map) result;
-
-            this.startAt = Field.getInteger(map.get("startAt"));
-            this.maxResults = Field.getInteger(map.get("maxResults"));
-            this.total = Field.getInteger(map.get("total"));
-            this.issues = Field.getResourceArray(Issue.class, map.get("issues"), restclient);
-            return issues;
-        }
-    }
-
-    /**
-     * Issue search results structure.
-     * <p>
-     * The issues of the result can be retrived from this class in 2 ways.
-     * <p>
-     * The first is to access the issues field directly. This is a list of Issue instances.
-     * Note however that this will only contain the issues fetched in the initial search,
-     * so its size will be the same as the max result value or below.
-     * <p>
-     * The second way is to use the iterator methods. This will return an Iterator instance,
-     * that will iterate over every result of the search, even if there is more than the max
-     * result value. The price for this, is that the call to next has none determistic performence,
-     * as it sometimes need to fetch a new batch of issues from Jira.
-     */
-    public static class SearchResult {
-        public int start = 0;
-        public int max = 0;
-        public int total = 0;
-        public List<Issue> issues = null;
-        private IssueIterator issueIterator;
-
-        public SearchResult(RestClient restclient, String jql, String includedFields,
-                            String expandFields, Integer maxResults, Integer startAt)
-                throws JiraException {
-            this.issueIterator = new IssueIterator(
-                    restclient,
-                    jql,
-                    includedFields,
-                    expandFields,
-                    maxResults,
-                    startAt
-            );
-            /* backwards compatibility shim - first page only */
-            this.issueIterator.hasNext();
-            this.max = issueIterator.maxResults;
-            this.start = issueIterator.startAt;
-            this.issues = issueIterator.issues;
-            this.total = issueIterator.total;
-        }
-
-        /**
-         * All issues found.
-         *
-         * @return All issues found.
-         */
-        public Iterator<Issue> iterator() {
-            return issueIterator;
-        }
-    }
-
-    public static final class NewAttachment {
-
-        private final String filename;
-        private final Object content;
-
-        public NewAttachment(File content) {
-            this(content.getName(), content);
-        }
-
-        public NewAttachment(String filename, File content) {
-            this.filename = requireFilename(filename);
-            this.content = requireContent(content);
-        }
-
-        public NewAttachment(String filename, InputStream content) {
-            this.filename = requireFilename(filename);
-            this.content = requireContent(content);
-        }
-
-        public NewAttachment(String filename, byte[] content) {
-            this.filename = requireFilename(filename);
-            this.content = requireContent(content);
-        }
-
-        String getFilename() {
-            return filename;
-        }
-
-        Object getContent() {
-            return content;
-        }
-
-        private static String requireFilename(String filename) {
-            if (filename == null) {
-                throw new NullPointerException("filename may not be null");
-            }
-            if (filename.length() == 0) {
-                throw new IllegalArgumentException("filename may not be empty");
-            }
-            return filename;
-        }
-
-        private static Object requireContent(Object content) {
-            if (content == null) {
-                throw new NullPointerException("content may not be null");
-            }
-            return content;
-        }
-
-    }
-
     private String key = null;
     private Map fields = null;
-
     /* system fields */
     private User assignee = null;
     private List<Attachment> attachments = null;
@@ -821,7 +71,6 @@ public class Issue extends Resource {
     private Date createdDate = null;
     private Date updatedDate = null;
     private Security security = null;
-
     /**
      * Creates an issue from a JSON payload.
      *
@@ -833,6 +82,304 @@ public class Issue extends Resource {
 
         if (json != null)
             deserialise(json);
+    }
+
+    /**
+     * count issues with the given query.
+     *
+     * @param restclient REST client instance
+     * @param jql        JQL statement
+     * @return the count
+     * @throws JiraException when the search fails
+     */
+    public static int count(RestClient restclient, String jql) throws JiraException {
+        final String j = jql;
+        JSON result = null;
+        try {
+            Map<String, String> queryParams = new HashMap<String, String>();
+            queryParams.put("jql", j);
+            queryParams.put("maxResults", "1");
+            URI searchUri = restclient.buildURI(getBaseUri() + "search", queryParams);
+            result = restclient.get(searchUri);
+        } catch (Exception ex) {
+            throw new JiraException("Failed to search issues", ex);
+        }
+
+        if (!(result instanceof JSONObject)) {
+            throw new JiraException("JSON payload is malformed");
+        }
+        Map map = (Map) result;
+        return Field.getInteger(map.get("total"));
+    }
+
+    private static String getRestUri(String key) {
+        return getBaseUri() + "issue/" + (key != null ? key : "");
+    }
+
+    public static JSONObject getCreateMetadata(RestClient restclient, String project, String issueTypeName) throws JiraException {
+        final JSONObject basicCreateMeta = getBasicIssueTypeCreateMeta(restclient, project, issueTypeName);
+        return getDetailedIssueTypeCreateMeta(restclient, project, basicCreateMeta.getString("id"));
+    }
+
+    /**
+     * Get the list of issue-types without the allowed-field-values
+     * @param restClient The connection to JIRA
+     * @param project The concerned project
+     * @param issueTypeName The name of the issue-type of interest
+     * @return The issue-type-definition (id, name, description ...)
+     * @throws JiraException on any issue getting the meta-infos or if there is no IssueType with the given name
+     */
+    private static JSONObject getBasicIssueTypeCreateMeta(RestClient restClient, String project, String issueTypeName) throws JiraException {
+        JSON result = null;
+        try {
+            URI createMetaUri = restClient.buildURI(String.format("%sissue/createmeta/%s/issuetypes", getBaseUri(), project));
+            result = restClient.get(createMetaUri);
+        } catch (Exception ex) {
+            throw new JiraException("Failed to retrieve issue metadata", ex);
+        }
+
+        if (!(result instanceof JSONObject))
+            throw new JiraException("JSON payload is malformed");
+
+        JSONObject jo = (JSONObject) result;
+
+        if (jo.isNullObject() || !jo.containsKey("values") || !(jo.get("values") instanceof JSONArray))
+            throw new JiraException("Create metadata is malformed");
+
+        JSONObject issueTypeMeta = new JSONObject(true);
+        final JSONArray issueTypeObjects = jo.getJSONArray("values");
+        for (int i = 0; i < issueTypeObjects.size(); i++) {
+            JSONObject obj = issueTypeObjects.getJSONObject(i);
+            if (obj.getString("name").equalsIgnoreCase(issueTypeName)) {
+                issueTypeMeta = obj;
+            }
+        }
+        if (issueTypeMeta.isNullObject()) {
+            throw new JiraException(String.format("IssueType '%s' for Project '%s' " +
+                    "is missing from create metadata. Do you have enough permissions?", issueTypeName, project));
+        }
+        return issueTypeMeta;
+    }
+
+    /**
+     * Gets the extended Issue-Type-Information with the allowed-field-values.
+     * @param restclient The connection to JIRA
+     * @param project The project of interest
+     * @param issueTypeId The ID of the desired issue-type
+     * @return A map of all Fields with their specifications (name, operations, allowedValues, fieldType ...)
+     * @throws JiraException on any issue getting the meta-infos or if there is no Issue-Type with the given ID
+     */
+    private static JSONObject getDetailedIssueTypeCreateMeta(RestClient restclient, String project, String issueTypeId) throws JiraException {
+        JSON result = null;
+        try {
+            result = restclient.get(
+                    String.format("%sissue/createmeta/%s/issuetypes/%s", getBaseUri(), project, issueTypeId),
+                    Map.of("maxResults", "500")
+            );
+        } catch (Exception e) {
+            throw new JiraException("Failed to retrieve issue metadata for Issue-Type-ID: " + issueTypeId, e);
+        }
+
+        if (!(result instanceof JSONObject))
+            throw new JiraException("JSON payload is malformed");
+
+        JSONObject jo = (JSONObject) result;
+        if (jo.isNullObject() || !jo.containsKey("values") || !(jo.get("values") instanceof JSONArray))
+            throw new JiraException("Create metadata is malformed");
+
+        // LGLJIRSYN-318: JiraClient muss neue "createmeta" REST-Methode verwenden
+        // We need a mapping (fieldId -> values) instead of the given array for compatibility
+        // This is because, there was no wrapper for this part of the original JIRA-Response,
+        // which has changed when the deprecated "issue/createmeta" was replaced with JIRA 9+
+        // As we want to migrate to another JIRA-Client, we don't want to do a major refactoring in this module.
+        final JSONObject fieldMapping = new JSONObject();
+        final JSONArray values = jo.getJSONArray("values");
+        for (int i = 0; i < values.size(); i++) {
+            final JSONObject obj = values.getJSONObject(i);
+            fieldMapping.accumulate(obj.getString("fieldId"), obj);
+        }
+        return fieldMapping;
+    }
+
+    /**
+     * Creates a new JIRA issue.
+     *
+     * @param restclient REST client instance
+     * @param project    Key of the project to create the issue in
+     * @param issueType  Name of the issue type to create
+     * @return a fluent create instance
+     * @throws JiraException when the client fails to retrieve issue metadata
+     */
+    public static FluentCreate create(RestClient restclient, String project, String issueType)
+            throws JiraException {
+
+        FluentCreate fc = new FluentCreate(
+                restclient,
+                getCreateMetadata(restclient, project, issueType));
+
+        return fc
+                .field(Field.PROJECT, project)
+                .field(Field.ISSUE_TYPE, issueType);
+    }
+
+    private static JSONObject realGet(RestClient restclient, String key, Map<String, String> queryParams)
+            throws JiraException {
+
+        JSON result = null;
+
+        try {
+            URI uri = restclient.buildURI(getBaseUri() + "issue/" + key, queryParams);
+            result = restclient.get(uri);
+        } catch (Exception ex) {
+            throw new JiraException("Failed to retrieve issue " + key, ex);
+        }
+
+        if (!(result instanceof JSONObject)) {
+            throw new JiraException("JSON payload is malformed");
+        }
+
+        return (JSONObject) result;
+    }
+
+    /**
+     * Retrieves the given issue record.
+     *
+     * @param restclient REST client instance
+     * @param key        Issue key (PROJECT-123)
+     * @return an issue instance (issue includes all navigable fields)
+     * @throws JiraException when the retrieval fails
+     */
+    public static Issue get(RestClient restclient, String key)
+            throws JiraException {
+
+        return new Issue(restclient, realGet(restclient, key, new HashMap<String, String>()));
+    }
+
+    /**
+     * Retrieves the given issue record.
+     *
+     * @param restclient     REST client instance
+     * @param key            Issue key (PROJECT-123)
+     * @param includedFields Specifies which issue fields will be included in
+     *                       the result.
+     *                       <br>Some examples how this parameter works:
+     *                       <ul>
+     *                       <li>*all - include all fields</li>
+     *                       <li>*navigable - include just navigable fields</li>
+     *                       <li>summary,comment - include just the summary and comments</li>
+     *                       <li>*all,-comment - include all fields</li>
+     *                       </ul>
+     * @return an issue instance
+     * @throws JiraException when the retrieval fails
+     */
+    public static Issue get(RestClient restclient, String key, final String includedFields)
+            throws JiraException {
+
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("fields", includedFields);
+        return new Issue(restclient, realGet(restclient, key, queryParams));
+    }
+
+    /**
+     * Retrieves the given issue record.
+     *
+     * @param restclient     REST client instance
+     * @param key            Issue key (PROJECT-123)
+     * @param includedFields Specifies which issue fields will be included in
+     *                       the result.
+     *                       <br>Some examples how this parameter works:
+     *                       <ul>
+     *                       <li>*all - include all fields</li>
+     *                       <li>*navigable - include just navigable fields</li>
+     *                       <li>summary,comment - include just the summary and comments</li>
+     *                       <li>*all,-comment - include all fields</li>
+     *                       </ul>
+     * @param expand         fields to expand when obtaining the issue
+     * @return an issue instance
+     * @throws JiraException when the retrieval fails
+     */
+    public static Issue get(RestClient restclient, String key, final String includedFields,
+                            final String expand) throws JiraException {
+
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("fields", includedFields);
+        if (expand != null) {
+            queryParams.put("expand", expand);
+        }
+        return new Issue(restclient, realGet(restclient, key, queryParams));
+    }
+
+    /**
+     * Search for issues with the given query and specify which fields to
+     * retrieve. If the total results is bigger than the maximum returned
+     * results, then further calls can be made using different values for
+     * the <code>startAt</code> field to obtain all the results.
+     *
+     * @param restclient     REST client instance
+     * @param jql            JQL statement
+     * @param includedFields Specifies which issue fields will be included in
+     *                       the result.
+     *                       <br>Some examples how this parameter works:
+     *                       <ul>
+     *                       <li>*all - include all fields</li>
+     *                       <li>*navigable - include just navigable fields</li>
+     *                       <li>summary,comment - include just the summary and comments</li>
+     *                       <li>*all,-comment - include all fields</li>
+     *                       </ul>
+     * @param maxResults     if non-<code>null</code>, defines the maximum number of
+     *                       results that can be returned
+     * @param startAt        if non-<code>null</code>, defines the first issue to
+     *                       return
+     * @param expandFields   fields to expand when obtaining the issue
+     * @return a search result structure with results
+     * @throws JiraException when the search fails
+     */
+    public static SearchResult search(RestClient restclient, String jql,
+                                      String includedFields, String expandFields, Integer maxResults,
+                                      Integer startAt) throws JiraException {
+
+        return new SearchResult(
+                restclient,
+                jql,
+                includedFields,
+                expandFields,
+                maxResults,
+                startAt
+        );
+    }
+
+    /**
+     * Creates the URI to execute a jql search.
+     *
+     * @param restclient
+     * @param jql
+     * @param includedFields
+     * @param expandFields
+     * @param maxResults
+     * @param startAt
+     * @return the URI to execute a jql search.
+     * @throws URISyntaxException
+     */
+    private static URI createSearchURI(RestClient restclient, String jql,
+                                       String includedFields, String expandFields, Integer maxResults,
+                                       Integer startAt) throws URISyntaxException {
+        Map<String, String> queryParams = new HashMap<String, String>();
+        queryParams.put("jql", jql);
+        if (maxResults != null) {
+            queryParams.put("maxResults", String.valueOf(maxResults));
+        }
+        if (includedFields != null) {
+            queryParams.put("fields", includedFields);
+        }
+        if (expandFields != null) {
+            queryParams.put("expand", expandFields);
+        }
+        if (startAt != null) {
+            queryParams.put("startAt", String.valueOf(startAt));
+        }
+
+        URI searchUri = restclient.buildURI(getBaseUri() + "search", queryParams);
+        return searchUri;
     }
 
     private void deserialise(JSONObject json) {
@@ -876,51 +423,6 @@ public class Issue extends Resource {
         createdDate = Field.getDateTime(fields.get(Field.CREATED_DATE));
         updatedDate = Field.getDateTime(fields.get(Field.UPDATED_DATE));
         security = Field.getResource(Security.class, fields.get(Field.SECURITY), restclient);
-    }
-
-    private static String getRestUri(String key) {
-        return getBaseUri() + "issue/" + (key != null ? key : "");
-    }
-
-    public static JSONObject getCreateMetadata(
-            RestClient restclient, String project, String issueType) throws JiraException {
-
-        final String pval = project;
-        final String itval = issueType;
-        JSON result = null;
-
-        try {
-            Map<String, String> params = new HashMap<String, String>();
-            params.put("expand", "projects.issuetypes.fields");
-            params.put("projectKeys", pval);
-            params.put("issuetypeNames", itval);
-            URI createuri = restclient.buildURI(
-                    getBaseUri() + "issue/createmeta",
-                    params);
-            result = restclient.get(createuri);
-        } catch (Exception ex) {
-            throw new JiraException("Failed to retrieve issue metadata", ex);
-        }
-
-        if (!(result instanceof JSONObject))
-            throw new JiraException("JSON payload is malformed");
-
-        JSONObject jo = (JSONObject) result;
-
-        if (jo.isNullObject() || !jo.containsKey("projects") ||
-                !(jo.get("projects") instanceof JSONArray))
-            throw new JiraException("Create metadata is malformed");
-
-        List<Project> projects = Field.getResourceArray(
-                Project.class,
-                (JSONArray) jo.get("projects"),
-                restclient);
-
-        if (projects.isEmpty() || projects.get(0).getIssueTypes().isEmpty())
-            throw new JiraException("Project '" + project + "'  or issue type '" + issueType +
-                    "' missing from create metadata. Do you have enough permissions?");
-
-        return projects.get(0).getIssueTypes().get(0).getFields();
     }
 
     private JSONObject getEditMetadata() throws JiraException {
@@ -1205,27 +707,6 @@ public class Issue extends Resource {
     }
 
     /**
-     * Creates a new JIRA issue.
-     *
-     * @param restclient REST client instance
-     * @param project    Key of the project to create the issue in
-     * @param issueType  Name of the issue type to create
-     * @return a fluent create instance
-     * @throws JiraException when the client fails to retrieve issue metadata
-     */
-    public static FluentCreate create(RestClient restclient, String project, String issueType)
-            throws JiraException {
-
-        FluentCreate fc = new FluentCreate(
-                restclient,
-                getCreateMetadata(restclient, project, issueType));
-
-        return fc
-                .field(Field.PROJECT, project)
-                .field(Field.ISSUE_TYPE, issueType);
-    }
-
-    /**
      * Creates a new sub-task.
      *
      * @return a fluent create instance
@@ -1234,166 +715,6 @@ public class Issue extends Resource {
     public FluentCreate createSubtask() throws JiraException {
         return Issue.create(restclient, getProject().getKey(), "Sub-task")
                 .field(Field.PARENT, getKey());
-    }
-
-    private static JSONObject realGet(RestClient restclient, String key, Map<String, String> queryParams)
-            throws JiraException {
-
-        JSON result = null;
-
-        try {
-            URI uri = restclient.buildURI(getBaseUri() + "issue/" + key, queryParams);
-            result = restclient.get(uri);
-        } catch (Exception ex) {
-            throw new JiraException("Failed to retrieve issue " + key, ex);
-        }
-
-        if (!(result instanceof JSONObject)) {
-            throw new JiraException("JSON payload is malformed");
-        }
-
-        return (JSONObject) result;
-    }
-
-    /**
-     * Retrieves the given issue record.
-     *
-     * @param restclient REST client instance
-     * @param key        Issue key (PROJECT-123)
-     * @return an issue instance (issue includes all navigable fields)
-     * @throws JiraException when the retrieval fails
-     */
-    public static Issue get(RestClient restclient, String key)
-            throws JiraException {
-
-        return new Issue(restclient, realGet(restclient, key, new HashMap<String, String>()));
-    }
-
-    /**
-     * Retrieves the given issue record.
-     *
-     * @param restclient     REST client instance
-     * @param key            Issue key (PROJECT-123)
-     * @param includedFields Specifies which issue fields will be included in
-     *                       the result.
-     *                       <br>Some examples how this parameter works:
-     *                       <ul>
-     *                       <li>*all - include all fields</li>
-     *                       <li>*navigable - include just navigable fields</li>
-     *                       <li>summary,comment - include just the summary and comments</li>
-     *                       <li>*all,-comment - include all fields</li>
-     *                       </ul>
-     * @return an issue instance
-     * @throws JiraException when the retrieval fails
-     */
-    public static Issue get(RestClient restclient, String key, final String includedFields)
-            throws JiraException {
-
-        Map<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("fields", includedFields);
-        return new Issue(restclient, realGet(restclient, key, queryParams));
-    }
-
-    /**
-     * Retrieves the given issue record.
-     *
-     * @param restclient     REST client instance
-     * @param key            Issue key (PROJECT-123)
-     * @param includedFields Specifies which issue fields will be included in
-     *                       the result.
-     *                       <br>Some examples how this parameter works:
-     *                       <ul>
-     *                       <li>*all - include all fields</li>
-     *                       <li>*navigable - include just navigable fields</li>
-     *                       <li>summary,comment - include just the summary and comments</li>
-     *                       <li>*all,-comment - include all fields</li>
-     *                       </ul>
-     * @param expand         fields to expand when obtaining the issue
-     * @return an issue instance
-     * @throws JiraException when the retrieval fails
-     */
-    public static Issue get(RestClient restclient, String key, final String includedFields,
-                            final String expand) throws JiraException {
-
-        Map<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("fields", includedFields);
-        if (expand != null) {
-            queryParams.put("expand", expand);
-        }
-        return new Issue(restclient, realGet(restclient, key, queryParams));
-    }
-
-    /**
-     * Search for issues with the given query and specify which fields to
-     * retrieve. If the total results is bigger than the maximum returned
-     * results, then further calls can be made using different values for
-     * the <code>startAt</code> field to obtain all the results.
-     *
-     * @param restclient     REST client instance
-     * @param jql            JQL statement
-     * @param includedFields Specifies which issue fields will be included in
-     *                       the result.
-     *                       <br>Some examples how this parameter works:
-     *                       <ul>
-     *                       <li>*all - include all fields</li>
-     *                       <li>*navigable - include just navigable fields</li>
-     *                       <li>summary,comment - include just the summary and comments</li>
-     *                       <li>*all,-comment - include all fields</li>
-     *                       </ul>
-     * @param maxResults     if non-<code>null</code>, defines the maximum number of
-     *                       results that can be returned
-     * @param startAt        if non-<code>null</code>, defines the first issue to
-     *                       return
-     * @param expandFields   fields to expand when obtaining the issue
-     * @return a search result structure with results
-     * @throws JiraException when the search fails
-     */
-    public static SearchResult search(RestClient restclient, String jql,
-                                      String includedFields, String expandFields, Integer maxResults,
-                                      Integer startAt) throws JiraException {
-
-        return new SearchResult(
-                restclient,
-                jql,
-                includedFields,
-                expandFields,
-                maxResults,
-                startAt
-        );
-    }
-
-    /**
-     * Creates the URI to execute a jql search.
-     *
-     * @param restclient
-     * @param jql
-     * @param includedFields
-     * @param expandFields
-     * @param maxResults
-     * @param startAt
-     * @return the URI to execute a jql search.
-     * @throws URISyntaxException
-     */
-    private static URI createSearchURI(RestClient restclient, String jql,
-                                       String includedFields, String expandFields, Integer maxResults,
-                                       Integer startAt) throws URISyntaxException {
-        Map<String, String> queryParams = new HashMap<String, String>();
-        queryParams.put("jql", jql);
-        if (maxResults != null) {
-            queryParams.put("maxResults", String.valueOf(maxResults));
-        }
-        if (includedFields != null) {
-            queryParams.put("fields", includedFields);
-        }
-        if (expandFields != null) {
-            queryParams.put("expand", expandFields);
-        }
-        if (startAt != null) {
-            queryParams.put("startAt", String.valueOf(startAt));
-        }
-
-        URI searchUri = restclient.buildURI(getBaseUri() + "search", queryParams);
-        return searchUri;
     }
 
     /**
@@ -1701,6 +1022,725 @@ public class Issue extends Resource {
             throw new JiraException("Failed to delete issue " + key, ex);
         }
         return result;
+    }
+
+    /**
+     * Used to chain fields to a create action.
+     */
+    public static final class FluentCreate {
+
+        Map<String, Object> fields = new HashMap<String, Object>();
+        RestClient restclient = null;
+        JSONObject createmeta = null;
+
+        private FluentCreate(RestClient restclient, JSONObject createmeta) {
+            this.restclient = restclient;
+            this.createmeta = createmeta;
+        }
+
+        /**
+         * Executes the create action (issue includes all fields).
+         *
+         * @throws JiraException when the create fails
+         */
+        public Issue execute() throws JiraException {
+            return executeCreate(null);
+        }
+
+        /**
+         * Executes the create action and specify which fields to retrieve.
+         *
+         * @param includedFields Specifies which issue fields will be included
+         *                       in the result.
+         *                       <br>Some examples how this parameter works:
+         *                       <ul>
+         *                       <li>*all - include all fields</li>
+         *                       <li>*navigable - include just navigable fields</li>
+         *                       <li>summary,comment - include just the summary and comments</li>
+         *                       <li>*all,-comment - include all fields</li>
+         *                       </ul>
+         * @throws JiraException when the create fails
+         */
+        public Issue execute(String includedFields) throws JiraException {
+            return executeCreate(includedFields);
+        }
+
+        /**
+         * Executes the create action and specify which fields to retrieve.
+         *
+         * @param includedFields Specifies which issue fields will be included
+         *                       in the result.
+         *                       <br>Some examples how this parameter works:
+         *                       <ul>
+         *                       <li>*all - include all fields</li>
+         *                       <li>*navigable - include just navigable fields</li>
+         *                       <li>summary,comment - include just the summary and comments</li>
+         *                       <li>*all,-comment - include all fields</li>
+         *                       </ul>
+         * @throws JiraException when the create fails
+         */
+        private Issue executeCreate(String includedFields) throws JiraException {
+            JSONObject fieldmap = new JSONObject();
+
+            if (fields.size() == 0) {
+                throw new JiraException("No fields were given for create");
+            }
+
+            for (Map.Entry<String, Object> ent : fields.entrySet()) {
+                Object newval = Field.toJson(ent.getKey(), ent.getValue(), createmeta);
+                fieldmap.accumulate(ent.getKey(), newval);
+            }
+
+            JSONObject req = new JSONObject();
+            req.put("fields", fieldmap);
+
+            JSON result = null;
+
+            try {
+                result = restclient.post(getRestUri(null), req);
+            } catch (Exception ex) {
+                throw new JiraException("Failed to create issue", ex);
+            }
+
+            if (!(result instanceof JSONObject) || !((JSONObject) result).containsKey("key")
+                    || !(((JSONObject) result).get("key") instanceof String)) {
+                throw new JiraException("Unexpected result on create issue");
+            }
+
+            if (includedFields != null) {
+                return Issue.get(restclient, (String) ((JSONObject) result).get("key"), includedFields);
+            } else {
+                return Issue.get(restclient, (String) ((JSONObject) result).get("key"));
+            }
+        }
+
+        /**
+         * Appends a field to the update action.
+         *
+         * @param name  Name of the field
+         * @param value New field value
+         * @return the current fluent update instance
+         */
+        public FluentCreate field(String name, Object value) {
+            fields.put(name, value);
+            return this;
+        }
+    }
+
+    /**
+     * Used to {@link #create() create} remote links. Provide at least the {@link #url(String)} or
+     * {@link #globalId(String) global id} and the {@link #title(String) title}.
+     */
+    public static final class FluentRemoteLink {
+
+        final private RestClient restclient;
+        final private String key;
+        final private JSONObject request;
+        final private JSONObject object;
+
+
+        private FluentRemoteLink(final RestClient restclient, String key) {
+            this.restclient = restclient;
+            this.key = key;
+            request = new JSONObject();
+            object = new JSONObject();
+        }
+
+
+        /**
+         * A globally unique identifier which uniquely identifies the remote application and the remote object within
+         * the remote system. The maximum length is 255 characters. This call sets also the {@link #url(String) url}.
+         *
+         * @param globalId the global id
+         * @return this instance
+         */
+        public FluentRemoteLink globalId(final String globalId) {
+            request.put("globalId", globalId);
+            url(globalId);
+            return this;
+        }
+
+
+        /**
+         * A hyperlink to the object in the remote system.
+         *
+         * @param url A hyperlink to the object in the remote system.
+         * @return this instance
+         */
+        public FluentRemoteLink url(final String url) {
+            object.put("url", url);
+            return this;
+        }
+
+
+        /**
+         * The title of the remote object.
+         *
+         * @param title The title of the remote object.
+         * @return this instance
+         */
+        public FluentRemoteLink title(final String title) {
+            object.put("title", title);
+            return this;
+        }
+
+
+        /**
+         * Provide an icon for the remote link.
+         *
+         * @param url   A 16x16 icon representing the type of the object in the remote system.
+         * @param title Text for the tooltip of the main icon describing the type of the object in the remote system.
+         * @return this instance
+         */
+        public FluentRemoteLink icon(final String url, final String title) {
+            final JSONObject icon = new JSONObject();
+            icon.put("url16x16", url);
+            icon.put("title", title);
+            object.put("icon", icon);
+            return this;
+        }
+
+
+        /**
+         * The status in the remote system.
+         *
+         * @param resolved  if {@code true} the link to the issue will be in a strike through font.
+         * @param title     Text for the tooltip of the main icon describing the type of the object in the remote system.
+         * @param iconUrl   Text for the tooltip of the main icon describing the type of the object in the remote system.
+         * @param statusUrl A hyperlink for the tooltip of the the status icon.
+         * @return this instance
+         */
+        public FluentRemoteLink status(final boolean resolved, final String iconUrl, final String title, final String statusUrl) {
+            final JSONObject status = new JSONObject();
+            status.put("resolved", Boolean.toString(resolved));
+            final JSONObject icon = new JSONObject();
+            icon.put("title", title);
+            if (iconUrl != null) {
+                icon.put("url16x16", iconUrl);
+            }
+            if (statusUrl != null) {
+                icon.put("link", statusUrl);
+            }
+            status.put("icon", icon);
+            object.put("status", status);
+            return this;
+        }
+
+
+        /**
+         * Textual summary of the remote object.
+         *
+         * @param summary Textual summary of the remote object.
+         * @return this instance
+         */
+        public FluentRemoteLink summary(final String summary) {
+            object.put("summary", summary);
+            return this;
+        }
+
+
+        /**
+         * Relationship between the remote object and the JIRA issue. This can be a verb or a noun.
+         * It is used to group together links in the UI.
+         *
+         * @param relationship Relationship between the remote object and the JIRA issue.
+         * @return this instance
+         */
+        public FluentRemoteLink relationship(final String relationship) {
+            request.put("relationship", relationship);
+            return this;
+        }
+
+
+        /**
+         * The application for this remote link. Links are grouped on the type and name in the UI. The name-spaced
+         * type of the application. It is not displayed to the user. Renderering plugins can register to render a
+         * certain type of application.
+         *
+         * @param type The name-spaced type of the application.
+         * @param name The human-readable name of the remote application instance that stores the remote object.
+         * @return this instance
+         */
+        public FluentRemoteLink application(final String type, final String name) {
+            final JSONObject application = new JSONObject();
+            if (type != null) {
+                application.put("type", type);
+            }
+            application.put("name", name);
+            request.put("application", application);
+            return this;
+        }
+
+
+        /**
+         * Creates or updates the remote link if a {@link #globalId(String) global id} is given and there is already
+         * a remote link for the specified global id.
+         *
+         * @throws JiraException when the remote link creation fails
+         */
+        public void create() throws JiraException {
+            try {
+                request.put("object", object);
+                restclient.post(getRestUri(key) + "/remotelink", request);
+            } catch (Exception ex) {
+                throw new JiraException("Failed add remote link to issue " + key, ex);
+            }
+        }
+
+    }
+
+    /**
+     * Iterates over all issues in the query by getting the next page of
+     * issues when the iterator reaches the last of the current page.
+     */
+    private static class IssueIterator implements Iterator<Issue> {
+        private Iterator<Issue> currentPage;
+        private RestClient restclient;
+        private Issue nextIssue;
+        private Integer maxResults = -1;
+        private String jql;
+        private String includedFields;
+        private String expandFields;
+        private Integer startAt;
+        private List<Issue> issues;
+        private int total;
+
+        public IssueIterator(RestClient restclient, String jql, String includedFields,
+                             String expandFields, Integer maxResults, Integer startAt)
+                throws JiraException {
+            this.restclient = restclient;
+            this.jql = jql;
+            this.includedFields = includedFields;
+            this.expandFields = expandFields;
+            this.maxResults = maxResults;
+            this.startAt = startAt;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (nextIssue != null) {
+                return true;
+            }
+            try {
+                nextIssue = getNextIssue();
+            } catch (JiraException e) {
+                throw new RuntimeException(e);
+            }
+            return nextIssue != null;
+        }
+
+        @Override
+        public Issue next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            Issue result = nextIssue;
+            nextIssue = null;
+            return result;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("Method remove() not support for class " +
+                    this.getClass().getName());
+        }
+
+        /**
+         * Gets the next issue, returning null if none more available
+         * Will ask the next set of issues from the server if the end
+         * of the current list of issues is reached.
+         *
+         * @return the next issue, null if none more available
+         * @throws JiraException
+         */
+        private Issue getNextIssue() throws JiraException {
+            // first call
+            if (currentPage == null) {
+                currentPage = getNextIssues().iterator();
+                if (currentPage == null || !currentPage.hasNext()) {
+                    return null;
+                } else {
+                    return currentPage.next();
+                }
+            }
+
+            // check if we need to get the next set of issues
+            if (!currentPage.hasNext()) {
+                currentPage = getNextIssues().iterator();
+            }
+
+            // return the next item if available
+            if (currentPage.hasNext()) {
+                return currentPage.next();
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Execute the query to get the next set of issues.
+         * Also sets the startAt, maxMresults, total and issues fields,
+         * so that the SearchResult can access them.
+         *
+         * @return the next set of issues.
+         * @throws JiraException
+         */
+        private List<Issue> getNextIssues() throws JiraException {
+            if (issues == null && startAt == null) {
+                startAt = Integer.valueOf(0);
+            } else if (issues != null) {
+                startAt = startAt + issues.size();
+            }
+
+            JSON result = null;
+
+            try {
+                URI searchUri = createSearchURI(restclient, jql, includedFields,
+                        expandFields, maxResults, startAt);
+                result = restclient.get(searchUri);
+            } catch (Exception ex) {
+                throw new JiraException("Failed to search issues", ex);
+            }
+
+            if (!(result instanceof JSONObject)) {
+                throw new JiraException("JSON payload is malformed");
+            }
+
+
+            Map map = (Map) result;
+
+            this.startAt = Field.getInteger(map.get("startAt"));
+            this.maxResults = Field.getInteger(map.get("maxResults"));
+            this.total = Field.getInteger(map.get("total"));
+            this.issues = Field.getResourceArray(Issue.class, map.get("issues"), restclient);
+            return issues;
+        }
+    }
+
+    /**
+     * Issue search results structure.
+     * <p>
+     * The issues of the result can be retrived from this class in 2 ways.
+     * <p>
+     * The first is to access the issues field directly. This is a list of Issue instances.
+     * Note however that this will only contain the issues fetched in the initial search,
+     * so its size will be the same as the max result value or below.
+     * <p>
+     * The second way is to use the iterator methods. This will return an Iterator instance,
+     * that will iterate over every result of the search, even if there is more than the max
+     * result value. The price for this, is that the call to next has none determistic performence,
+     * as it sometimes need to fetch a new batch of issues from Jira.
+     */
+    public static class SearchResult {
+        public int start = 0;
+        public int max = 0;
+        public int total = 0;
+        public List<Issue> issues = null;
+        private IssueIterator issueIterator;
+
+        public SearchResult(RestClient restclient, String jql, String includedFields,
+                            String expandFields, Integer maxResults, Integer startAt)
+                throws JiraException {
+            this.issueIterator = new IssueIterator(
+                    restclient,
+                    jql,
+                    includedFields,
+                    expandFields,
+                    maxResults,
+                    startAt
+            );
+            /* backwards compatibility shim - first page only */
+            this.issueIterator.hasNext();
+            this.max = issueIterator.maxResults;
+            this.start = issueIterator.startAt;
+            this.issues = issueIterator.issues;
+            this.total = issueIterator.total;
+        }
+
+        /**
+         * All issues found.
+         *
+         * @return All issues found.
+         */
+        public Iterator<Issue> iterator() {
+            return issueIterator;
+        }
+    }
+
+    public static final class NewAttachment {
+
+        private final String filename;
+        private final Object content;
+
+        public NewAttachment(File content) {
+            this(content.getName(), content);
+        }
+
+        public NewAttachment(String filename, File content) {
+            this.filename = requireFilename(filename);
+            this.content = requireContent(content);
+        }
+
+        public NewAttachment(String filename, InputStream content) {
+            this.filename = requireFilename(filename);
+            this.content = requireContent(content);
+        }
+
+        public NewAttachment(String filename, byte[] content) {
+            this.filename = requireFilename(filename);
+            this.content = requireContent(content);
+        }
+
+        private static String requireFilename(String filename) {
+            if (filename == null) {
+                throw new NullPointerException("filename may not be null");
+            }
+            if (filename.length() == 0) {
+                throw new IllegalArgumentException("filename may not be empty");
+            }
+            return filename;
+        }
+
+        private static Object requireContent(Object content) {
+            if (content == null) {
+                throw new NullPointerException("content may not be null");
+            }
+            return content;
+        }
+
+        String getFilename() {
+            return filename;
+        }
+
+        Object getContent() {
+            return content;
+        }
+
+    }
+
+    /**
+     * Used to chain fields to an update action.
+     */
+    public final class FluentUpdate {
+
+        Map<String, Object> fields = new HashMap<String, Object>();
+        Map<String, List> fieldOpers = new HashMap<String, List>();
+        JSONObject editmeta = null;
+
+        private FluentUpdate(JSONObject editmeta) {
+            this.editmeta = editmeta;
+        }
+
+        /**
+         * Executes the update action.
+         *
+         * @throws JiraException when the update fails
+         */
+        public void execute() throws JiraException {
+            JSONObject fieldmap = new JSONObject();
+            JSONObject updatemap = new JSONObject();
+
+            if (fields.size() == 0 && fieldOpers.size() == 0)
+                throw new JiraException("No fields were given for update");
+
+            for (Map.Entry<String, Object> ent : fields.entrySet()) {
+                Object newval = Field.toJson(ent.getKey(), ent.getValue(), editmeta);
+                fieldmap.put(ent.getKey(), newval);
+            }
+
+            for (Map.Entry<String, List> ent : fieldOpers.entrySet()) {
+                Object newval = Field.toJson(ent.getKey(), ent.getValue(), editmeta);
+                updatemap.put(ent.getKey(), newval);
+            }
+
+            JSONObject req = new JSONObject();
+
+            if (fieldmap.size() > 0)
+                req.put("fields", fieldmap);
+
+            if (updatemap.size() > 0)
+                req.put("update", updatemap);
+
+            try {
+                restclient.put(getRestUri(key), req);
+            } catch (Exception ex) {
+                throw new JiraException("Failed to update issue " + key, ex);
+            }
+        }
+
+        /**
+         * Appends a field to the update action.
+         *
+         * @param name  Name of the field
+         * @param value New field value
+         * @return the current fluent update instance
+         */
+        public FluentUpdate field(String name, Object value) {
+            fields.put(name, value);
+            return this;
+        }
+
+        private FluentUpdate fieldOperation(String oper, String name, Object value) {
+            if (!fieldOpers.containsKey(name))
+                fieldOpers.put(name, new ArrayList());
+
+            fieldOpers.get(name).add(new Field.Operation(oper, value));
+            return this;
+        }
+
+        /**
+         * Adds a field value to the existing value set.
+         *
+         * @param name  Name of the field
+         * @param value Field value to append
+         * @return the current fluent update instance
+         */
+        public FluentUpdate fieldAdd(String name, Object value) {
+            return fieldOperation("add", name, value);
+        }
+
+        /**
+         * Removes a field value from the existing value set.
+         *
+         * @param name  Name of the field
+         * @param value Field value to remove
+         * @return the current fluent update instance
+         */
+        public FluentUpdate fieldRemove(String name, Object value) {
+            return fieldOperation("remove", name, value);
+        }
+    }
+
+    /**
+     * Used to chain fields to a transition action.
+     */
+    public final class FluentTransition {
+
+        Map<String, Object> fields = new HashMap<String, Object>();
+        String comment = null;
+        List<Transition> transitions = null;
+        JSONObject resolution = null;
+
+
+        private FluentTransition(List<Transition> transitions) {
+            this.transitions = transitions;
+        }
+
+        private Transition getTransition(String id, boolean isName) throws JiraException {
+            Transition result = null;
+
+            for (Transition transition : transitions) {
+                if ((isName && id.equals(transition.getName())
+                        || (!isName && id.equals(transition.getId())))) {
+                    result = transition;
+                }
+            }
+
+            if (result == null) {
+                final String allTransitionNames = Arrays.toString(transitions.toArray());
+                throw new JiraException("Transition '" + id + "' was not found. Known transitions are:" + allTransitionNames);
+            }
+
+            return result;
+        }
+
+        private void realExecute(Transition trans) throws JiraException {
+
+            if (trans == null || trans.getFields() == null)
+                throw new JiraException("Transition is missing fields");
+
+            JSONObject req = new JSONObject();
+            if (StringUtils.isNotBlank(comment)) {
+                JSONArray comments = new JSONArray();
+                comments.add(new JSONObject().accumulate("add", new JSONObject().accumulate("body", comment)));
+                req.put("update", new JSONObject().accumulate("comment", comments)
+                );
+            }
+
+            JSONObject fieldmap = new JSONObject();
+            for (Map.Entry<String, Object> ent : fields.entrySet()) {
+                fieldmap.accumulate(ent.getKey(), ent.getValue());
+            }
+
+
+            if (fieldmap.size() > 0)
+                req.put("fields", fieldmap);
+
+            JSONObject t = new JSONObject();
+            t.put("id", Field.getString(trans.getId()));
+
+            req.put("transition", t);
+
+            try {
+                restclient.post(getRestUri(key) + "/transitions", req);
+            } catch (Exception ex) {
+                throw new JiraException("Failed to transition issue " + key, ex);
+            }
+        }
+
+        /**
+         * Executes the transition action.
+         *
+         * @param id Internal transition ID
+         * @throws JiraException when the transition fails
+         */
+        public void execute(int id) throws JiraException {
+            realExecute(getTransition(Integer.toString(id), false));
+        }
+
+        /**
+         * Executes the transition action.
+         *
+         * @param transition Transition
+         * @throws JiraException when the transition fails
+         */
+        public void execute(Transition transition) throws JiraException {
+            realExecute(transition);
+        }
+
+        /**
+         * Executes the transition action.
+         *
+         * @param name Transition name
+         * @throws JiraException when the transition fails
+         */
+        public void execute(String name) throws JiraException {
+            realExecute(getTransition(name, true));
+        }
+
+        /**
+         * Appends a field to the transition action.
+         *
+         * @param name  Name of the field
+         * @param value New field value
+         * @return the current fluent transition instance
+         */
+        public FluentTransition field(String name, Object value) {
+            fields.put(name, value);
+            return this;
+        }
+
+        /**
+         * Appends a comment to the transition action.
+         *
+         * @param body The comment to add
+         * @return the current fluent transition instance
+         */
+        public FluentTransition comment(String body) {
+            this.comment = body;
+            return this;
+        }
+
+        /**
+         * Sets the given resolution with this transition action.
+         *
+         * @param value The resolution
+         * @return the current fluent transition instance
+         */
+        public FluentTransition resolution(String value) {
+            fields.put(Field.RESOLUTION, new JSONObject().accumulate("name", value));
+            return this;
+        }
     }
 
 }
