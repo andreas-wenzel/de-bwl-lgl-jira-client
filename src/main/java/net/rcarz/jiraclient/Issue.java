@@ -71,6 +71,7 @@ public class Issue extends Resource {
     private Date createdDate = null;
     private Date updatedDate = null;
     private Security security = null;
+
     /**
      * Creates an issue from a JSON payload.
      *
@@ -123,8 +124,9 @@ public class Issue extends Resource {
 
     /**
      * Get the list of issue-types without the allowed-field-values
-     * @param restClient The connection to JIRA
-     * @param project The concerned project
+     *
+     * @param restClient    The connection to JIRA
+     * @param project       The concerned project
      * @param issueTypeName The name of the issue-type of interest
      * @return The issue-type-definition (id, name, description ...)
      * @throws JiraException on any issue getting the meta-infos or if there is no IssueType with the given name
@@ -163,8 +165,9 @@ public class Issue extends Resource {
 
     /**
      * Gets the extended Issue-Type-Information with the allowed-field-values.
-     * @param restclient The connection to JIRA
-     * @param project The project of interest
+     *
+     * @param restclient  The connection to JIRA
+     * @param project     The project of interest
      * @param issueTypeId The ID of the desired issue-type
      * @return A map of all Fields with their specifications (name, operations, allowedValues, fieldType ...)
      * @throws JiraException on any issue getting the meta-infos or if there is no Issue-Type with the given ID
@@ -709,11 +712,12 @@ public class Issue extends Resource {
     /**
      * Creates a new sub-task.
      *
+     * @param issueTypeName The name of the sub-task to create
      * @return a fluent create instance
      * @throws JiraException when the client fails to retrieve issue metadata
      */
-    public FluentCreate createSubtask() throws JiraException {
-        return Issue.create(restclient, getProject().getKey(), "Sub-task")
+    public FluentCreate createSubtask(final String issueTypeName) throws JiraException {
+        return Issue.create(restclient, getProject().getKey(), issueTypeName)
                 .field(Field.PARENT, getKey());
     }
 
