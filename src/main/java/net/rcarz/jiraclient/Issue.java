@@ -1598,13 +1598,14 @@ public class Issue extends Resource {
         }
 
         private JSONObject getIssueTypeMeta(Object value) {
-            // sometimes we get it as string, sometimes it is a ValueTuple, sometimes even the ID directly
+            // sometimes we get it as string, sometimes it is a ValueTuple
             String issueTypeName = value.toString();
-            if (value instanceof Field.ValueTuple)
-                issueTypeName = ((Field.ValueTuple) value).value.toString();
-
-            // sometimes we get the ID directly, so we adapt our checks
-            final String attributeName = StringUtils.isNumeric(issueTypeName) ? "id" : "name";
+            String attributeName = "name";
+            if (value instanceof Field.ValueTuple) {
+                final Field.ValueTuple tuple = (Field.ValueTuple) value;
+                issueTypeName = tuple.value.toString();
+                attributeName = tuple.type;
+            }
 
             // lookup issue-type in allowed values
             final JSONObject issueTypesMeta = editmeta.getJSONObject("issuetype");
