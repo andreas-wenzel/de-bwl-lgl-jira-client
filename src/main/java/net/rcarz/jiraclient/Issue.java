@@ -201,6 +201,11 @@ public class Issue extends Resource {
             final JSONObject obj = values.getJSONObject(i);
             fieldMapping.accumulate(obj.getString("fieldId"), obj);
         }
+        // LGLJIRSYN-332: Aufgaben können nicht erstellt werden
+        // There is constant confusion with the issue-type-names as they are sometimes translated, sometimes not.
+        // So we should not depend on their names at all, so we add here the "IssueTypeID" to the response, so we
+        // can refer to it, when we create the ticket.
+        fieldMapping.accumulate("issuetypeid", issueTypeId);
         return fieldMapping;
     }
 
@@ -216,13 +221,13 @@ public class Issue extends Resource {
     public static FluentCreate create(RestClient restclient, String project, String issueType)
             throws JiraException {
 
-        FluentCreate fc = new FluentCreate(
-                restclient,
-                getCreateMetadata(restclient, project, issueType));
+        final JSONObject createmeta = getCreateMetadata(restclient, project, issueType);
+        FluentCreate fc = new FluentCreate(restclient, createmeta);
 
         return fc
                 .field(Field.PROJECT, project)
-                .field(Field.ISSUE_TYPE, issueType);
+                // LGLJIRSYN-332: set here the Issue-Type-ID instead of the Issue-Type-Name
+                .field(Field.ISSUE_TYPE, new Field.ValueTuple("id", createmeta.getString("issuetypeid")));
     }
 
     private static JSONObject realGet(RestClient restclient, String key, Map<String, String> queryParams)
@@ -1580,8 +1585,34 @@ public class Issue extends Resource {
          * @return the current fluent update instance
          */
         public FluentUpdate field(String name, Object value) {
-            fields.put(name, value);
+            // Use the Issue-Type-ID instead of the Issue-Type-Name
+            if (name.equalsIgnoreCase(Field.ISSUE_TYPE)) {
+                final JSONObject issueTypeMeta = getIssueTypeMeta(value);
+                fields.put(name, new Field.ValueTuple("id", issueTypeMeta.getString("id")));
+            } else {
+                fields.put(name, value);
+            }
             return this;
+        }
+
+        private JSONObject getIssueTypeMeta(Object value) {
+            // sometimes we get it as string, sometimes it is a ValueTuple
+            String issueTypeName = value.toString();
+            if (value instanceof Field.ValueTuple)
+                issueTypeName = ((Field.ValueTuple) value).value.toString();
+            // lookup issue-type in allowed values
+            final JSONObject issueTypesMeta = editmeta.getJSONObject("issuetype");
+            for (Object obj : issueTypesMeta.getJSONArray("allowedValues")) {
+                JSONObject allowedType = (JSONObject) obj;
+                if (allowedType.getString("name").equalsIgnoreCase(issueTypeName))
+                    return allowedType;
+            }
+            // provide a meaningful error-message, if type not found
+            Collection<String> allowedIssueTypes = new ArrayList<>();
+            issueTypesMeta.getJSONArray("allowedValues")
+                    .forEach(obj -> allowedIssueTypes.add(((JSONObject) obj).getString("name")));
+            throw new RuntimeException(String.format("IssueType %s not found in editmeta. AllowedIssueTypes are : %s",
+                    issueTypeName, StringUtils.join(allowedIssueTypes, ", ")));
         }
 
         private FluentUpdate fieldOperation(String oper, String name, Object value) {
