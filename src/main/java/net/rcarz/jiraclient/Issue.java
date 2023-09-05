@@ -33,6 +33,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static java.lang.String.format;
+
 /**
  * Represents a JIRA issue.
  */
@@ -134,7 +136,7 @@ public class Issue extends Resource {
     private static JSONObject getBasicIssueTypeCreateMeta(RestClient restClient, String project, String issueTypeName) throws JiraException {
         JSON result = null;
         try {
-            URI createMetaUri = restClient.buildURI(String.format("%sissue/createmeta/%s/issuetypes", getBaseUri(), project));
+            URI createMetaUri = restClient.buildURI(format("%sissue/createmeta/%s/issuetypes", getBaseUri(), project));
             result = restClient.get(createMetaUri);
         } catch (Exception ex) {
             throw new JiraException("Failed to retrieve issue metadata", ex);
@@ -157,7 +159,7 @@ public class Issue extends Resource {
             }
         }
         if (issueTypeMeta.isNullObject()) {
-            throw new JiraException(String.format("IssueType '%s' for Project '%s' " +
+            throw new JiraException(format("IssueType '%s' for Project '%s' " +
                     "is missing from create metadata. Do you have enough permissions?", issueTypeName, project));
         }
         return issueTypeMeta;
@@ -176,7 +178,7 @@ public class Issue extends Resource {
         JSON result = null;
         try {
             result = restclient.get(
-                    String.format("%sissue/createmeta/%s/issuetypes/%s", getBaseUri(), project, issueTypeId),
+                    format("%sissue/createmeta/%s/issuetypes/%s", getBaseUri(), project, issueTypeId),
                     Map.of("maxResults", "500")
             );
         } catch (Exception e) {
@@ -1596,23 +1598,30 @@ public class Issue extends Resource {
         }
 
         private JSONObject getIssueTypeMeta(Object value) {
-            // sometimes we get it as string, sometimes it is a ValueTuple
+            // sometimes we get it as string, sometimes it is a ValueTuple, sometimes even the ID directly
             String issueTypeName = value.toString();
             if (value instanceof Field.ValueTuple)
                 issueTypeName = ((Field.ValueTuple) value).value.toString();
+
+            // sometimes we get the ID directly, so we adapt our checks
+            final String attributeName = StringUtils.isNumeric(issueTypeName) ? "id" : "name";
+
             // lookup issue-type in allowed values
             final JSONObject issueTypesMeta = editmeta.getJSONObject("issuetype");
             for (Object obj : issueTypesMeta.getJSONArray("allowedValues")) {
                 JSONObject allowedType = (JSONObject) obj;
-                if (allowedType.getString("name").equalsIgnoreCase(issueTypeName))
+                if (allowedType.getString(attributeName).equalsIgnoreCase(issueTypeName))
                     return allowedType;
             }
             // provide a meaningful error-message, if type not found
             Collection<String> allowedIssueTypes = new ArrayList<>();
             issueTypesMeta.getJSONArray("allowedValues")
-                    .forEach(obj -> allowedIssueTypes.add(((JSONObject) obj).getString("name")));
-            throw new RuntimeException(String.format("IssueType %s not found in editmeta. AllowedIssueTypes are : %s",
-                    issueTypeName, StringUtils.join(allowedIssueTypes, ", ")));
+                    .forEach(obj -> {
+                        final JSONObject jsonObj = (JSONObject) obj;
+                        allowedIssueTypes.add(format("%s (ID: %s)", jsonObj.getString("name"), jsonObj.getString("id")));
+                    });
+            throw new RuntimeException(format("IssueType (%s) %s not found in editmeta. AllowedIssueTypes are: %s",
+                    attributeName, issueTypeName, StringUtils.join(allowedIssueTypes, ", ")));
         }
 
         private FluentUpdate fieldOperation(String oper, String name, Object value) {
