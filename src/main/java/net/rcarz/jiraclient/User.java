@@ -239,6 +239,28 @@ public class User extends Resource {
         return result;
     }
 
+    /**
+     * Changes the Password of the user
+     * @param secret The new password for the user
+     * @return Empty if successful, otherwise contain some error-hints.
+     * @throws JiraException on any problem
+     */
+    public JSON changePassword(String secret) throws JiraException {
+        JSON result;
+        try {
+            result = restclient.put(new URIBuilder(getBaseUri() + "user/password")
+                            .addParameter("username", name)
+                            .addParameter("key", name)
+                            .build(),
+                    new JSONObject().accumulate("password", secret));
+        } catch (Exception e) {
+            throw new JiraException("Failed to change password for User: "+ name);
+        }
+        if (!(result instanceof JSONArray))
+            throw new JiraException("JSON payload is malformed");
+        return result;
+    }
+
     private void toggleState(Boolean active) throws JiraException {
         JSONObject json = new JSONObject()
                 .accumulate("username", getName())
