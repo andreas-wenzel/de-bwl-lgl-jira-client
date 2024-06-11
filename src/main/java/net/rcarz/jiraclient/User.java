@@ -19,13 +19,12 @@
 
 package net.rcarz.jiraclient;
 
+import org.apache.http.client.utils.URIBuilder;
 import org.kordamp.json.JSON;
 import org.kordamp.json.JSONArray;
 import org.kordamp.json.JSONObject;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,7 +65,7 @@ public class User extends Resource {
                 .accumulate("emailAddress", email)
                 .accumulate("displayName", displayName);
 
-        JSON result = null;
+        JSON result;
         try {
             result = restclient.post(getBaseUri() + "user", payload);
         } catch (Exception ex) {
@@ -90,9 +89,9 @@ public class User extends Resource {
     public static User get(RestClient restclient, String username)
             throws JiraException {
 
-        JSON result = null;
+        JSON result;
 
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put("username", username);
         params.put("expand", "groups");
 
@@ -117,9 +116,9 @@ public class User extends Resource {
      * @throws JiraException when the retrieval fails
      */
     public static Collection<User> searchUser(RestClient restClient, String name) throws JiraException {
-        JSON result = null;
+        JSON result;
 
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put("username", name);
         params.put("includeInactive", Boolean.TRUE.toString());
 
@@ -132,7 +131,7 @@ public class User extends Resource {
         if (!(result instanceof JSONArray))
             throw new JiraException("JSON payload is malformed");
 
-        Collection<User> users = (Collection<User>) ((JSONArray) result).stream()
+        Collection<User> users = ((JSONArray) result).stream()
                 .map(obj -> new User(restClient, (JSONObject) obj))
                 .collect(Collectors.toList());
         return users;
@@ -219,11 +218,28 @@ public class User extends Resource {
         return groups;
     }
 
-    private void toggleState(Boolean active) throws JiraException {
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("username", getName());
-        params.put("key", getName());
+    /**
+     * Deletes this user. If deletion fails please review JIRA-Rest-API-Docs
+     *
+     * @return The response is empty if call was successful, otherwise contains errors.
+     * @throws JiraException on any problem deleting the user
+     */
+    public JSON delete() throws JiraException {
+        JSON result;
+        try {
+            result = restclient.delete(new URIBuilder(getBaseUri() + "user")
+                    .addParameter("username", name)
+                    .addParameter("key", name)
+                    .build());
+        } catch (Exception ex) {
+            throw new JiraException("Failed to delete user " + name, ex);
+        }
+        if (!(result instanceof JSONArray))
+            throw new JiraException("JSON payload is malformed");
+        return result;
+    }
 
+    private void toggleState(Boolean active) throws JiraException {
         JSONObject json = new JSONObject()
                 .accumulate("username", getName())
                 .accumulate("key", getName())
