@@ -1,17 +1,17 @@
 /**
  * jira-client - a simple JIRA REST client
  * Copyright (c) 2013 Bob Carroll (bob.carroll@alum.rit.edu)
- *
+ * <p>
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
-
+ * <p>
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
@@ -25,6 +25,7 @@ import org.kordamp.json.JSONArray;
 import org.kordamp.json.JSONObject;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -111,7 +112,7 @@ public class User extends Resource {
      * Searches for User by their name.
      *
      * @param restClient REST client instance
-     * @param name   User logon name to search for
+     * @param name       User logon name to search for
      * @return All matching users or empty list if nothing found.
      * @throws JiraException when the retrieval fails
      */
@@ -208,6 +209,7 @@ public class User extends Resource {
 
     /**
      * Get the groups this user is member of
+     *
      * @return The groups
      * @throws JiraException failed to obtain the groups
      */
@@ -221,44 +223,50 @@ public class User extends Resource {
     /**
      * Deletes this user. If deletion fails please review JIRA-Rest-API-Docs
      *
-     * @return The response is empty if call was successful, otherwise contains errors.
      * @throws JiraException on any problem deleting the user
      */
-    public JSON delete() throws JiraException {
-        JSON result;
+    public void delete() throws JiraException {
         try {
-            result = restclient.delete(new URIBuilder(getBaseUri() + "user")
+            restclient.delete(new URIBuilder(getBaseUri() + "user")
                     .addParameter("username", name)
                     .addParameter("key", name)
                     .build());
         } catch (Exception ex) {
             throw new JiraException("Failed to delete user " + name, ex);
         }
-        if (!(result instanceof JSONArray))
-            throw new JiraException("JSON payload is malformed");
-        return result;
     }
 
     /**
      * Changes the Password of the user
+     *
      * @param secret The new password for the user
-     * @return Empty if successful, otherwise contain some error-hints.
      * @throws JiraException on any problem
      */
-    public JSON changePassword(String secret) throws JiraException {
-        JSON result;
+    public void changePassword(String secret) throws JiraException {
         try {
-            result = restclient.put(new URIBuilder(getBaseUri() + "user/password")
+            restclient.put(new URIBuilder(getBaseUri() + "user/password")
                             .addParameter("username", name)
                             .addParameter("key", name)
                             .build(),
                     new JSONObject().accumulate("password", secret));
         } catch (Exception e) {
-            throw new JiraException("Failed to change password for User: "+ name);
+            throw new JiraException("Failed to change password for User: " + name, e);
         }
-        if (!(result instanceof JSONArray))
-            throw new JiraException("JSON payload is malformed");
-        return result;
+    }
+
+    /**
+     * Schedules a user-anonymization-process. Requires admin permission
+     * @throws JiraException on any problem scheduling this task
+     */
+    public void anonymize() throws JiraException {
+        try {
+            restclient.post(new URIBuilder(getBaseUri() + "user/anonymization").build(),
+                    new JSONObject()
+                            .accumulate("userKey", name)
+                            .accumulate("newOwnerKey", "admin"));
+        } catch (Exception e) {
+            throw new JiraException("Failed to schedule User-Anonymization for: "+ name, e);
+        }
     }
 
     private void toggleState(Boolean active) throws JiraException {
