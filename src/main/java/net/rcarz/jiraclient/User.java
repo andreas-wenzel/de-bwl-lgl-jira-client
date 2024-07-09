@@ -19,13 +19,11 @@
 
 package net.rcarz.jiraclient;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.kordamp.json.JSON;
 import org.kordamp.json.JSONArray;
 import org.kordamp.json.JSONObject;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -227,10 +225,8 @@ public class User extends Resource {
      */
     public void delete() throws JiraException {
         try {
-            restclient.delete(new URIBuilder(getBaseUri() + "user")
-                    .addParameter("username", name)
-                    .addParameter("key", name)
-                    .build());
+            restclient.delete(restclient.buildURI(getBaseUri() + "user",
+                    Map.of("username", name)));
         } catch (Exception ex) {
             throw new JiraException("Failed to delete user " + name, ex);
         }
@@ -244,10 +240,7 @@ public class User extends Resource {
      */
     public void changePassword(String secret) throws JiraException {
         try {
-            restclient.put(new URIBuilder(getBaseUri() + "user/password")
-                            .addParameter("username", name)
-                            .addParameter("key", name)
-                            .build(),
+            restclient.put(restclient.buildURI(getBaseUri() + "user/password", Map.of("username", name)),
                     new JSONObject().accumulate("password", secret));
         } catch (Exception e) {
             throw new JiraException("Failed to change password for User: " + name, e);
@@ -260,7 +253,7 @@ public class User extends Resource {
      */
     public void anonymize() throws JiraException {
         try {
-            restclient.post(new URIBuilder(getBaseUri() + "user/anonymization").build(),
+            restclient.post(restclient.buildURI(getBaseUri() + "user/anonymization"),
                     new JSONObject()
                             .accumulate("userKey", name)
                             .accumulate("newOwnerKey", "admin"));
