@@ -238,10 +238,11 @@ public class Issue extends Resource {
         JSON result = null;
 
         try {
-            URI uri = restclient.buildURI(getBaseUri() + "issue/" + key, queryParams);
+            // Hotfix for LGLJIRSYN-410: JIRA-Keys do not contain spaces
+            URI uri = restclient.buildURI(getBaseUri() + "issue/" + key.trim(), queryParams);
             result = restclient.get(uri);
         } catch (Exception ex) {
-            throw new JiraException("Failed to retrieve issue " + key, ex);
+            throw new JiraException(String.format("Failed to retrieve issue: '%s'", key), ex);
         }
 
         if (!(result instanceof JSONObject)) {
