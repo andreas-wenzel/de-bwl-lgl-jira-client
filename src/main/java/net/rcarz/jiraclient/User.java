@@ -24,10 +24,7 @@ import org.kordamp.json.JSONArray;
 import org.kordamp.json.JSONObject;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -55,7 +52,6 @@ public class User extends Resource {
         if (json != null)
             deserialise(json);
     }
-
 
     public static User create(RestClient restclient, String username, String email, String displayName) throws JiraException {
         JSON payload = new JSONObject()
@@ -273,6 +269,18 @@ public class User extends Resource {
         } catch (Exception ex) {
             throw new JiraException("Failed to activate user: " + getName(), ex);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(name, user.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 }
 
