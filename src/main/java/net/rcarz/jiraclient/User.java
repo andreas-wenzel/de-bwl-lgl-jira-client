@@ -267,7 +267,7 @@ public class User extends Resource {
             URI updateUser = restclient.buildURI(getBaseUri() + "user", Collections.singletonMap("username", getName()));
             restclient.put(updateUser, json);
         } catch (Exception ex) {
-            throw new JiraException("Failed to activate user: " + getName(), ex);
+            throw new JiraException("Failed to %s user: %s".formatted(active ? "activate" : "deactivate", getName()), ex);
         }
     }
 
