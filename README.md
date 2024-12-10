@@ -1,3 +1,8 @@
+# Permanently Moved / Hard Fork
+This project has moved to the internal SCM. That way it can be considered as a hard-fork.
+The work is discontinued here.
+
+
 # jira-client #
 
 [![Build Status](https://travis-ci.org/rcarz/jira-client.svg?branch=master)](https://travis-ci.org/rcarz/jira-client)
